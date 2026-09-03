@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =================================================================
+    // HELPER FUNCTIONS
+    // =================================================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the authenticated user's UID matches the provided UID
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Check if a field exists and is a string within length limits
+    function isValidString(data, field, minLen, maxLen) {
+      return data.keys().hasAll([field]) &&
+             data[field] is string &&
+             data[field].size() >= minLen &&
+             data[field].size() <= maxLen;
+    }
+
+    // Verify that specific fields are NOT being changed during an update
+    function isImmutable(fields) {
+      return !request.writeFields.hasAny(fields);
+    }
+
+    // =================================================================
+    // RULES
+    // =================================================================
+
+    // Deny access to root-level collections not explicitly matched below.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ----- USER ROOT COLLECTION -----
+    match /users/{uid} {
+      // Only the user with the matching UID can access their root document.
+      allow read, write: if isOwner(uid);
+
+      // ----- SUBCOLLECTIONS -----
+
+      // 1. JOURNALS
+      match /journals/{journalId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid) &&
+                         isValidString(request.resource.data, 'content', 1, 50000) &&
+                         request.resource.data.keys().hasAll(['createdAt', 'date']);
+        allow update: if isOwner(uid) &&
+                         isValidString(request.resource.data, 'content', 1, 50000) &&
+                         isImmutable(['createdAt', 'date']);
+      }
+
+      // 2. MEMORIES (Extracted facts)
+      match /memories/{memoryId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid) &&
+                         (isValidString(request.resource.data, 'fact', 5, 2000) ||
+                          isValidString(request.resource.data, 'content', 5, 2000));
+        allow update: if isOwner(uid) &&
+                         isImmutable(['sourceId', 'createdAt']);
+      }
+
+      // 3. CONVERSATIONS (Chat history)
+      match /conversations/{conversationId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid);
+
+        // Messages within a conversation
+        match /messages/{messageId} {
+          allow read: if isOwner(uid);
+          allow update: if false; // Immutable audit trail
+          allow create: if isOwner(uid) &&
+                           request.resource.data.role in ['user', 'model'] &&
+                           isValidString(request.resource.data, 'content', 1, 20000);
+        }
+      }
+
+      // 4. GOALS
+      match /goals/{goalId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid) && isValidString(request.resource.data, 'title', 1, 300);
+        allow update: if isOwner(uid) && isImmutable(['createdAt']);
+      }
+
+      // 5. DECISIONS
+      match /decisions/{decisionId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid) &&
+                         (isValidString(request.resource.data, 'decision', 1, 500) ||
+                          isValidString(request.resource.data, 'title', 1, 500));
+        allow update: if isOwner(uid) && isImmutable(['createdAt', 'date']);
+      }
+
+      // 6. INSIGHTS
+      match /insights/{insightId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isImmutable(['createdAt']);
+      }
+
+      // 7. RELATIONSHIPS (Graph edges)
+      match /relationships/{relId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isImmutable(['createdAt']);
+      }
+    }
+  }
+}
