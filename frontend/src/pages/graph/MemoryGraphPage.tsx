@@ -47,82 +47,14 @@ const NODE_COLORS: Record<number, string> = {
   0: '#64748b', // Slate
 };
 
-const DEFAULT_GRAPH_DATA: GraphData = {
-  nodes: [
-    {
-      id: 'n1',
-      label: 'Security Constitution',
-      type: 'decision',
-      group: 4,
-      val: 9,
-      data: {
-        content: 'Zero-trust browser architecture and UID cryptographic tenant isolation.',
-        entityType: 'decision',
-        createdAt: new Date().toISOString(),
-      },
-    },
-    {
-      id: 'n2',
-      label: 'Deep Focus Morning Block',
-      type: 'memory',
-      group: 1,
-      val: 7,
-      data: {
-        content: 'Habit preference: Reserves 9 AM to 1 PM for unfragmented engineering focus.',
-        entityType: 'memory',
-        createdAt: new Date().toISOString(),
-      },
-    },
-    {
-      id: 'n3',
-      label: 'Ship MindVault MVP',
-      type: 'goal',
-      group: 3,
-      val: 8,
-      data: {
-        title: 'Ship MindVault MVP',
-        description: 'Complete full-stack implementation with multi-layer verification tests.',
-        entityType: 'goal',
-        status: 'in_progress',
-        createdAt: new Date().toISOString(),
-      },
-    },
-    {
-      id: 'n4',
-      label: 'Prompt Injection Immunity',
-      type: 'memory',
-      group: 1,
-      val: 6,
-      data: {
-        content: 'Delimit user inputs via XML tags to shield against jailbreak commands.',
-        entityType: 'memory',
-        createdAt: new Date().toISOString(),
-      },
-    },
-    {
-      id: 'n5',
-      label: 'Longitudinal Reflection Pipeline',
-      type: 'idea',
-      group: 2,
-      val: 7,
-      data: {
-        content: 'Periodically detect recurring psychological and productivity patterns.',
-        entityType: 'idea',
-        createdAt: new Date().toISOString(),
-      },
-    },
-  ],
-  links: [
-    { source: 'n1', target: 'n4', type: 'supports' },
-    { source: 'n2', target: 'n3', type: 'supports' },
-    { source: 'n3', target: 'n1', type: 'depends_on' },
-    { source: 'n5', target: 'n2', type: 'related_to' },
-  ],
+const EMPTY_GRAPH_DATA: GraphData = {
+  nodes: [],
+  links: [],
 };
 
 const MemoryGraphPage: React.FC = () => {
   const { currentUser } = useAuth();
-  const [graphData, setGraphData] = useState<GraphData>(DEFAULT_GRAPH_DATA);
+  const [graphData, setGraphData] = useState<GraphData>(EMPTY_GRAPH_DATA);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [timeFilter, setTimeFilter] = useState('30');
@@ -141,12 +73,12 @@ const MemoryGraphPage: React.FC = () => {
           links: res.data.edges || res.data.links || [],
         });
       } else {
-        setGraphData(DEFAULT_GRAPH_DATA);
+        setGraphData(EMPTY_GRAPH_DATA);
       }
       setTimeout(() => graphRef.current?.zoomToFit(400, 50), 500);
     } catch (error) {
-      console.warn('Backend graph API returned error, displaying cached vault topology:', error);
-      setGraphData(DEFAULT_GRAPH_DATA);
+      console.warn('Backend graph API returned error:', error);
+      setGraphData(EMPTY_GRAPH_DATA);
     } finally {
       setIsLoading(false);
     }

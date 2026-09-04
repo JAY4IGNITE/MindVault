@@ -4,6 +4,8 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { GitMerge, Plus, Calendar, Clock, Sparkles, CheckCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { api } from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface DecisionItem {
   id: string;
@@ -16,29 +18,7 @@ interface DecisionItem {
   reviewDate?: string;
 }
 
-const SAMPLE_DECISIONS: DecisionItem[] = [
-  {
-    id: 'dec_1',
-    decision: 'Adopt Fastify with Zod schema validation over Express',
-    reasoning:
-      'Fastify delivers lower HTTP overhead and built-in support for schema-based serialization, directly enforcing parameter sanitization and strict validation contracts.',
-    status: 'reviewed',
-    date: '2026-09-02',
-    expectedOutcome: 'Sub-10ms API overhead and zero untyped controller parameters.',
-    actualOutcome: 'Achieved complete type safety and streamlined rate-limiting integration.',
-    reviewDate: '2026-09-03',
-  },
-  {
-    id: 'dec_2',
-    decision: 'Deploy DOMPurify for client-side rich HTML sanitization',
-    reasoning:
-      'Prevent Stored XSS vectors in personal journal reflections and AI outputs before rendering via dangerouslySetInnerHTML.',
-    status: 'active',
-    date: '2026-09-01',
-    expectedOutcome: '100% elimination of unauthorized script executions.',
-    reviewDate: '2026-09-15',
-  },
-];
+
 
 const statusStyles: Record<string, string> = {
   active: 'bg-sky-50 text-accent border border-sky-200',
@@ -48,31 +28,52 @@ const statusStyles: Record<string, string> = {
 };
 
 const DecisionsPage: React.FC = () => {
-  const [decisions, setDecisions] = useState<DecisionItem[]>(SAMPLE_DECISIONS);
+  const { currentUser } = useAuth();
+  const [decisions, setDecisions] = useState<DecisionItem[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [newDecision, setNewDecision] = useState('');
   const [newReasoning, setNewReasoning] = useState('');
   const [newExpectedOutcome, setNewExpectedOutcome] = useState('');
 
-  const handleCreate = (e: React.FormEvent) => {
+  const fetchDecisions = async () => {
+    if (!currentUser) return;
+    setIsLoading(true);
+    try {
+      const res = await api.get('/api/v1/decisions');
+      setDecisions(res.data);
+    } catch (err) {
+      console.error('Failed to fetch decisions', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchDecisions();
+  }, [currentUser]);
+
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDecision.trim()) return;
 
-    const item: DecisionItem = {
-      id: `dec_${Date.now()}`,
-      decision: newDecision.trim(),
-      reasoning: newReasoning.trim(),
-      expectedOutcome: newExpectedOutcome.trim() || undefined,
-      status: 'active',
-      date: new Date().toISOString().split('T')[0],
-      reviewDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    };
+    try {
+      await api.post('/api/v1/decisions', {
+        decision: newDecision.trim(),
+        reasoning: newReasoning.trim(),
+        expectedOutcome: newExpectedOutcome.trim() || undefined,
+        date: new Date().toISOString(),
+        reviewDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      });
 
-    setDecisions([item, ...decisions]);
-    setIsCreating(false);
-    setNewDecision('');
-    setNewReasoning('');
-    setNewExpectedOutcome('');
+      setIsCreating(false);
+      setNewDecision('');
+      setNewReasoning('');
+      setNewExpectedOutcome('');
+      fetchDecisions();
+    } catch (err) {
+      console.error('Failed to create decision', err);
+    }
   };
 
   return (

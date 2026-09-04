@@ -2,9 +2,11 @@ import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { BookText, BrainCircuit, Target, GitMerge, Plus, Sparkles, MessageSquare, Network, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AskMemoryCard } from './components/AskMemoryCard';
+import { collection, query, orderBy, limit, getDocs, getCountFromServer } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { api } from '../../lib/api';
 
 const DashboardPage: React.FC = () => {
   const { currentUser } = useAuth();
@@ -13,37 +15,75 @@ const DashboardPage: React.FC = () => {
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const displayName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Explorer';
 
-  // Stats data
-  const stats = {
-    journals: 28,
-    memories: 142,
-    goals: 6,
-    decisions: 15,
-  };
+  const [stats, setStats] = React.useState({ journals: 0, memories: 0, goals: 0, decisions: 0 });
+  const [recentActivities, setRecentActivities] = React.useState<any[]>([]);
+  const [emergingTheme, setEmergingTheme] = React.useState<any>(null);
 
-  const recentActivities = [
-    {
-      id: 1,
-      title: 'Daily Reflection logged',
-      time: 'Today, 09:15 AM',
-      type: 'journal',
-      snippet: 'Deep work block completed on system security and tenant isolation.',
-    },
-    {
-      id: 2,
-      title: 'Atomic Memory extracted',
-      time: 'Yesterday, 04:30 PM',
-      type: 'memory',
-      snippet: 'Preference: Prefers asynchronous deep focus hours before 1 PM.',
-    },
-    {
-      id: 3,
-      title: 'Decision recorded',
-      time: '2 days ago',
-      type: 'decision',
-      snippet: 'Decision: Implement Fastify rate limiting per UID to mitigate DoS.',
-    },
-  ];
+  React.useEffect(() => {
+    if (!currentUser) return;
+    const fetchDashboardData = async () => {
+      try {
+        const journalsSnap = await getCountFromServer(collection(db, `users/${currentUser.uid}/journals`));
+        const insightsSnap = await getCountFromServer(collection(db, `users/${currentUser.uid}/insights`));
+        
+        let decisionsCount = 0;
+        let decs: any[] = [];
+        try {
+          const decRes = await api.get('/api/v1/decisions');
+          decisionsCount = decRes.data.length;
+          decs = decRes.data;
+        } catch (e) {
+          // ignore
+        }
+
+        setStats({
+          journals: journalsSnap.data().count,
+          memories: insightsSnap.data().count,
+          goals: 0, // Goals not implemented yet
+          decisions: decisionsCount
+        });
+
+        const activities: any[] = [];
+        
+        const qJ = query(collection(db, `users/${currentUser.uid}/journals`), orderBy('createdAt', 'desc'), limit(3));
+        const jSnap = await getDocs(qJ);
+        jSnap.forEach(doc => {
+           activities.push({
+             id: doc.id,
+             title: doc.data().title || 'Journal Entry',
+             time: doc.data().createdAt?.toDate()?.toLocaleDateString() || 'Recent',
+             type: 'journal',
+             snippet: doc.data().content,
+             timestamp: doc.data().createdAt?.toMillis() || 0
+           });
+        });
+
+        decs.slice(0, 3).forEach(d => {
+           activities.push({
+             id: d.id,
+             title: d.decision,
+             time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
+             type: 'decision',
+             snippet: d.reasoning,
+             timestamp: d.createdAt ? new Date(d.createdAt).getTime() : 0
+           });
+        });
+
+        activities.sort((a, b) => b.timestamp - a.timestamp);
+        setRecentActivities(activities.slice(0, 3));
+
+        const qI = query(collection(db, `users/${currentUser.uid}/insights`), orderBy('createdAt', 'desc'), limit(1));
+        const iSnap = await getDocs(qI);
+        if (!iSnap.empty) {
+           setEmergingTheme(iSnap.docs[0].data());
+        }
+      } catch (err) {
+        console.error("Error fetching dashboard data", err);
+      }
+    };
+    
+    fetchDashboardData();
+  }, [currentUser]);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -182,29 +222,47 @@ const DashboardPage: React.FC = () => {
         {/* Right Column: Emerging Themes & Graph Callout */}
         <div className="lg:col-span-5 space-y-6">
           {/* Emerging Theme Card */}
-          <Card className="bg-gradient-to-br from-sky-50/50 to-surface border-sky-200/80 shadow-subtle">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2 text-accent">
-                <Sparkles className="h-4 w-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Detected Recurring Theme</span>
-              </div>
-              <CardTitle className="text-lg font-bold">Deep Focus vs. Disruption</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-xs text-secondary leading-relaxed">
-                Across 4 reflections in the past 14 days, you noted superior cognitive output when scheduling no meetings prior to noon.
-              </p>
-              <div className="p-3 rounded-xl bg-white border border-sky-100 text-xs text-primary-dark">
-                <span className="font-semibold text-accent block mb-1">Suggested Reflection:</span>
-                "Would reserving Tuesday and Thursday mornings as permanent focus sanctuaries reinforce this habit?"
-              </div>
-              <Link to="/insights" className="block pt-1">
-                <Button variant="outline" size="sm" className="w-full text-xs gap-1.5 border-sky-200 text-accent hover:bg-sky-50">
-                  Explore All Insights <ArrowRight className="h-3 w-3" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          {emergingTheme ? (
+            <Card className="bg-gradient-to-br from-sky-50/50 to-surface border-sky-200/80 shadow-subtle">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2 text-accent">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Detected Recurring Theme</span>
+                </div>
+                <CardTitle className="text-lg font-bold">{emergingTheme.theme}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-xs text-secondary leading-relaxed">
+                  {emergingTheme.summary}
+                </p>
+                {emergingTheme.suggestedReflection && (
+                  <div className="p-3 rounded-xl bg-white border border-sky-100 text-xs text-primary-dark">
+                    <span className="font-semibold text-accent block mb-1">Suggested Reflection:</span>
+                    "{emergingTheme.suggestedReflection}"
+                  </div>
+                )}
+                <Link to="/insights" className="block pt-1">
+                  <Button variant="outline" size="sm" className="w-full text-xs gap-1.5 border-sky-200 text-accent hover:bg-sky-50">
+                    Explore All Insights <ArrowRight className="h-3 w-3" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-gradient-to-br from-slate-50 to-surface border-border shadow-subtle">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2 text-muted">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Theme Analysis Pending</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-secondary leading-relaxed">
+                  Record more journals and decisions to allow MindVault to detect patterns and generate insights.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Graph Visualization Callout */}
           <Card className="bg-gradient-to-br from-purple-50/40 to-surface border-purple-200/70 shadow-subtle">

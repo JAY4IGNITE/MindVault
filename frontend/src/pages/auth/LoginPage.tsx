@@ -21,7 +21,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setDevUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -47,18 +46,6 @@ const LoginPage: React.FC = () => {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       navigate(from, { replace: true });
     } catch (error: any) {
-      console.warn('Firebase login failed, offering dev login fallback:', error);
-      // If Firebase emulator/project isn't configured in this local run, offer convenient fallback
-      if (
-        error.code === 'auth/invalid-api-key' ||
-        error.code === 'auth/network-request-failed' ||
-        error.code === 'auth/configuration-not-found'
-      ) {
-        setDevUser(data.email);
-        navigate(from, { replace: true });
-        return;
-      }
-
       let errorMessage = 'Failed to sign in. Please verify your credentials.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         errorMessage = 'Invalid email or password.';
@@ -66,13 +53,9 @@ const LoginPage: React.FC = () => {
         errorMessage = 'Too many failed attempts. Please try again later.';
       }
       setAuthError(errorMessage);
+    } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickDemoAccess = () => {
-    setDevUser('alex.mercer@mindvault.ai');
-    navigate(from, { replace: true });
   };
 
   return (
@@ -124,24 +107,6 @@ const LoginPage: React.FC = () => {
                 Sign In to Vault
               </Button>
             </form>
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-surface px-2 text-muted font-medium">Local Dev Fast-Track</span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full gap-2 text-xs border-dashed border-accent/40 text-accent hover:bg-accent-light/40"
-              onClick={handleQuickDemoAccess}
-            >
-              <Sparkles className="h-3.5 w-3.5" /> Instant Demo Session (No Firebase config required)
-            </Button>
 
             <div className="text-center text-xs text-secondary pt-2">
               Don't have a vault yet?{' '}

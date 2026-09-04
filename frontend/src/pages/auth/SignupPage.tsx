@@ -26,7 +26,6 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const { setDevUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -46,17 +45,8 @@ const SignupPage: React.FC = () => {
       await createUserWithEmailAndPassword(auth, data.email, data.password);
       navigate('/dashboard');
     } catch (error: any) {
-      console.warn('Firebase signup failed, activating dev session:', error);
-      if (
-        error.code === 'auth/invalid-api-key' ||
-        error.code === 'auth/network-request-failed' ||
-        error.code === 'auth/configuration-not-found'
-      ) {
-        setDevUser(data.email);
-        navigate('/dashboard');
-        return;
-      }
       setAuthError(error.message || 'Failed to create vault.');
+    } finally {
       setIsLoading(false);
     }
   };

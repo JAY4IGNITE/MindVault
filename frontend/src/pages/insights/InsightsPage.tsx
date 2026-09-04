@@ -3,48 +3,49 @@ import { RecurringThemeCard, InsightData } from '../../components/insights/Recur
 import { Button } from '../../components/ui/Button';
 import { Lightbulb, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { api } from '../../lib/api';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { useAuth } from '../../contexts/AuthContext';
 
-const SAMPLE_INSIGHTS: InsightData[] = [
-  {
-    id: 'theme_deep_focus',
-    theme: 'Deep Work & Morning Sanctuaries',
-    frequency: 4,
-    timeRange: 'Aug 20 - Sep 03',
-    summary:
-      'Consistently associates uninterrupted morning hours with heightened clarity, reduced decision fatigue, and higher architectural velocity.',
-    possibleInterpretation:
-      'Morning hours represent your lowest cognitive interference zone; asynchronous communication safeguards your highest leverage outputs.',
-    suggestedReflection:
-      'What single boundary can you formalize to protect this morning sanctuary on a recurring weekly basis?',
-  },
-  {
-    id: 'theme_system_modularity',
-    theme: 'Decoupled Architectures & Security',
-    frequency: 3,
-    timeRange: 'Aug 25 - Sep 03',
-    summary:
-      'Repeatedly gravitates toward strict trust boundaries, isolated service boundaries, and explicit contracts.',
-    possibleInterpretation:
-      'You prioritize predictable, tamper-proof architectures over premature convenience or monolithic coupling.',
-    suggestedReflection:
-      'Are there auxiliary areas in your toolchain where adopting a similar zero-trust mindset would eliminate friction?',
-  },
-];
+
 
 const InsightsPage: React.FC = () => {
-  const [insights, setInsights] = useState<InsightData[]>(SAMPLE_INSIGHTS);
+  const { currentUser } = useAuth();
+  const [insights, setInsights] = useState<InsightData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    if (!currentUser) return;
+    const q = query(collection(db, `users/${currentUser.uid}/insights`), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loaded: InsightData[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        loaded.push({
+          id: doc.id,
+          theme: data.theme,
+          frequency: data.frequency || 1,
+          timeRange: data.timeRange || '',
+          summary: data.summary,
+          possibleInterpretation: data.possibleInterpretation,
+          suggestedReflection: data.suggestedReflection,
+        });
+      });
+      setInsights(loaded);
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [currentUser]);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
       await api.post('/api/v1/intelligence/generate-insights');
     } catch (e) {
-      console.warn('Backend insight generation trigger simulated:', e);
+      console.warn('Failed to trigger insight generation:', e);
     } finally {
-      setTimeout(() => {
-        setIsGenerating(false);
-      }, 1200);
+      setIsGenerating(false);
     }
   };
 

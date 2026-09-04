@@ -4,6 +4,9 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { BookText, Calendar, Plus, Sparkles, Loader2, CheckCircle2, Search, Clock } from 'lucide-react';
 import { sanitizeHtml } from '../../lib/sanitize';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface JournalEntry {
   id: string;
@@ -15,65 +18,67 @@ interface JournalEntry {
   mood?: string;
 }
 
-const SAMPLE_JOURNALS: JournalEntry[] = [
-  {
-    id: 'j1',
-    date: '2026-09-03',
-    title: 'Architectural Decisions & Deep Isolation',
-    content:
-      'Spent the morning finalizing the MindVault Security Constitution. We established that the browser is completely untrusted terrain. All operations flow through Fastify with strict UID authorization headers. Feeling extremely confident in this foundation.',
-    conciseSummary:
-      'Solidified MindVault zero-trust browser boundaries and Fastify UID authorization middleware.',
-    topics: ['Security', 'Architecture', 'MindVault'],
-    mood: 'Focused',
-  },
-  {
-    id: 'j2',
-    date: '2026-09-02',
-    title: 'Asynchronous Workflow & Deep Focus Blocks',
-    content:
-      'Experimented with completely cutting out morning synchronous notifications. Noticed a substantial boost in mental stamina and code quality. Will aim to protect the 9am-1pm window permanently.',
-    conciseSummary:
-      'Discovered morning asynchronous focus blocks yielded significant cognitive and coding improvements.',
-    topics: ['Habits', 'Productivity', 'Focus'],
-    mood: 'Energized',
-  },
-];
+
 
 const JournalPage: React.FC = () => {
-  const [entries, setEntries] = useState<JournalEntry[]>(SAMPLE_JOURNALS);
-  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(entries[0]);
+  const { currentUser } = useAuth();
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   // New entry form state
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSaveEntry = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    if (!currentUser) return;
+    const q = query(collection(db, `users/${currentUser.uid}/journals`), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loaded: JournalEntry[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        loaded.push({
+          id: doc.id,
+          date: data.createdAt?.toDate ? data.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          title: data.title,
+          content: data.content,
+          conciseSummary: data.conciseSummary,
+          topics: data.topics,
+          mood: data.mood,
+        });
+      });
+      setEntries(loaded);
+      if (!selectedEntry && loaded.length > 0 && !isCreating) {
+        setSelectedEntry(loaded[0]);
+      }
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [currentUser, isCreating]);
+
+  const handleSaveEntry = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newContent.trim()) return;
+    if (!newContent.trim() || !currentUser) return;
 
     setIsSaving(true);
-    const newEntry: JournalEntry = {
-      id: `j_${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-      title: newTitle.trim() || 'Daily Reflection',
-      content: newContent.trim(),
-      conciseSummary: 'Extracted reflection entry saved to your encrypted vault.',
-      topics: ['Reflection', 'Personal'],
-      mood: 'Reflective',
-    };
-
-    setTimeout(() => {
-      setEntries([newEntry, ...entries]);
-      setSelectedEntry(newEntry);
+    try {
+      await addDoc(collection(db, `users/${currentUser.uid}/journals`), {
+        title: newTitle.trim() || 'Daily Reflection',
+        content: newContent.trim(),
+        createdAt: serverTimestamp(),
+      });
       setIsCreating(false);
       setNewTitle('');
       setNewContent('');
+      // Selection reset logic relies on onSnapshot fetching the latest document.
+    } catch (err) {
+      console.error("Failed to save journal entry:", err);
+    } finally {
       setIsSaving(false);
-    }, 600);
+    }
   };
 
   const filteredEntries = entries.filter(
