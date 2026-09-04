@@ -89,172 +89,188 @@ const JournalPage: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-8 animate-fade-in pb-12">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-border/60">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pb-6 border-b border-white/10">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-display text-primary-dark flex items-center gap-2">
-            <BookText className="h-7 w-7 text-accent" /> Journal & Vault Logs
+          <h1 className="text-3xl sm:text-4xl font-bold font-display text-foreground flex items-center gap-3">
+            <BookText className="h-8 w-8 text-blue-400" /> Journal & Vault Logs
           </h1>
-          <p className="text-xs sm:text-sm text-secondary">
+          <p className="text-sm sm:text-base text-muted-foreground mt-2">
             Capture unfiltered reflections. MindVault extracts atomic memories and patterns.
           </p>
         </div>
         <Button
-          variant="default"
-          size="sm"
-          className="gap-2 shadow-sm"
           onClick={() => {
             setIsCreating(true);
             setSelectedEntry(null);
           }}
+          className="gap-2 shrink-0 rounded-full h-11 px-6 shadow-glow"
         >
-          <Plus className="h-4 w-4" /> New Reflection
+          <Plus className="h-4 w-4" /> New Entry
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Entry List & Search */}
-        <div className="lg:col-span-5 space-y-4">
-          <Input
-            placeholder="Search entries, keywords, or topics..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="text-xs bg-white"
-          />
+      {/* Main Content Split */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-220px)] min-h-[600px]">
+        {/* Left Sidebar (List) */}
+        <div className="lg:col-span-4 flex flex-col gap-4 overflow-hidden">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search journals..."
+              className="pl-11 bg-white/5 border-white/10 rounded-xl h-12"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-          <div className="space-y-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
-            {filteredEntries.map((entry) => {
-              const isSelected = selectedEntry?.id === entry.id && !isCreating;
-              return (
+          <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-hide">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-40 text-muted-foreground space-y-3">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <p className="text-xs font-medium uppercase tracking-widest">Loading vault logs...</p>
+              </div>
+            ) : filteredEntries.length === 0 ? (
+              <div className="text-center p-8 border border-dashed border-white/10 rounded-2xl bg-white/5">
+                <p className="text-sm text-muted-foreground mb-4">No entries found.</p>
+                <Button variant="outline" size="sm" onClick={() => setIsCreating(true)} className="rounded-full border-white/10">
+                  Write your first entry
+                </Button>
+              </div>
+            ) : (
+              filteredEntries.map((entry) => (
                 <div
                   key={entry.id}
                   onClick={() => {
                     setSelectedEntry(entry);
                     setIsCreating(false);
                   }}
-                  className={`p-4 rounded-xl border transition-all duration-150 cursor-pointer ${
-                    isSelected
-                      ? 'border-accent bg-sky-50/40 shadow-subtle'
-                      : 'border-border bg-white hover:border-slate-300 hover:shadow-subtle'
+                  className={`p-4 rounded-[1.25rem] cursor-pointer transition-all duration-200 border ${
+                    selectedEntry?.id === entry.id && !isCreating
+                      ? 'bg-white/10 border-white/20 shadow-glow'
+                      : 'bg-white/5 border-white/5 hover:bg-white/10'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-xs font-bold text-primary-dark truncate">{entry.title}</span>
-                    <span className="text-[10px] text-muted flex items-center gap-1 shrink-0">
-                      <Calendar className="h-3 w-3" /> {entry.date}
-                    </span>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold text-foreground line-clamp-1">{entry.title}</h3>
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2 font-medium bg-black/20 px-2 py-0.5 rounded-full">{entry.date}</span>
                   </div>
-                  <p className="text-xs text-secondary line-clamp-2 leading-relaxed">{entry.content}</p>
-
-                  {entry.topics && entry.topics.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {entry.topics.map((t) => (
-                        <span
-                          key={t}
-                          className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium"
-                        >
-                          #{t}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{entry.content}</p>
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
         </div>
 
-        {/* Right Column: Editor or Detail View */}
-        <div className="lg:col-span-7">
+        {/* Right Content Area */}
+        <div className="lg:col-span-8 flex flex-col h-full overflow-hidden">
           {isCreating ? (
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle>Compose New Reflection</CardTitle>
-                <CardDescription>
-                  Write freely. MindVault will parse durable memories upon saving.
-                </CardDescription>
+            <Card className="flex-1 flex flex-col overflow-hidden border-white/5 bg-white/5 backdrop-blur-md shadow-2xl">
+              <CardHeader className="border-b border-white/10 bg-black/10">
+                <CardTitle>New Journal Entry</CardTitle>
+                <CardDescription>Jot down your thoughts. Encryption happens automatically.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSaveEntry} className="space-y-4">
+              <CardContent className="flex-1 flex flex-col p-6 overflow-hidden gap-4">
+                <form id="new-entry-form" onSubmit={handleSaveEntry} className="flex-1 flex flex-col gap-4 h-full">
                   <Input
-                    placeholder="Entry Title (e.g., Morning Focus & Insights)"
+                    placeholder="Entry Title (Optional)"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    className="font-medium text-sm"
+                    className="text-lg font-medium bg-white/5 border-white/10 rounded-xl h-14"
                   />
-                  <div className="space-y-1">
-                    <textarea
-                      rows={12}
-                      placeholder="What is happening? What did you decide, observe, or wonder today?"
-                      value={newContent}
-                      onChange={(e) => setNewContent(e.target.value)}
-                      className="w-full rounded-lg border border-border p-3 text-sm text-primary placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent resize-y"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button type="button" variant="ghost" onClick={() => setIsCreating(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" variant="default" isLoading={isSaving} disabled={!newContent.trim()}>
-                      Encrypt & Save Entry
-                    </Button>
-                  </div>
+                  <textarea
+                    placeholder="What's on your mind? Just start typing..."
+                    value={newContent}
+                    onChange={(e) => setNewContent(e.target.value)}
+                    className="flex-1 w-full p-4 rounded-2xl border border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-shadow text-base leading-relaxed"
+                    required
+                  />
                 </form>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button type="button" variant="ghost" onClick={() => setIsCreating(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" form="new-entry-form" variant="default" isLoading={isSaving} disabled={!newContent.trim()}>
+                    Encrypt & Save Entry
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : selectedEntry ? (
-            <Card className="animate-fade-in">
-              <CardHeader className="border-b border-border/50 pb-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-accent flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" /> Logged on {selectedEntry.date}
-                  </span>
-                  {selectedEntry.mood && (
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">
-                      Mood: {selectedEntry.mood}
+            <Card className="flex-1 flex flex-col overflow-hidden border-white/5 bg-white/5 backdrop-blur-md shadow-2xl">
+              <CardHeader className="border-b border-white/10 bg-black/10">
+                <div>
+                  <CardTitle className="text-2xl font-bold font-display text-foreground leading-tight">
+                    {selectedEntry.title}
+                  </CardTitle>
+                  <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {selectedEntry.date}
                     </span>
-                  )}
-                </div>
-                <CardTitle className="text-xl sm:text-2xl mt-2">{selectedEntry.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 pt-6">
-                {/* AI Extracted Summary Banner */}
-                {selectedEntry.conciseSummary && (
-                  <div className="p-4 rounded-xl bg-sky-50/70 border border-sky-200/70 space-y-1.5">
-                    <div className="flex items-center gap-2 text-xs font-bold text-accent uppercase tracking-wider">
-                      <Sparkles className="h-3.5 w-3.5" /> AI Extracted Summary
-                    </div>
-                    <p className="text-xs sm:text-sm text-primary-dark leading-relaxed">
-                      {selectedEntry.conciseSummary}
-                    </p>
-                  </div>
-                )}
-
-                {/* Raw content */}
-                <div
-                  className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap select-text"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedEntry.content) }}
-                />
-
-                {/* Topics footer */}
-                {selectedEntry.topics && (
-                  <div className="pt-4 border-t border-border flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-muted font-medium">Tags:</span>
-                    {selectedEntry.topics.map((t) => (
-                      <span key={t} className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg">
-                        #{t}
+                    {selectedEntry.mood && (
+                      <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
+                        Mood: {selectedEntry.mood}
                       </span>
-                    ))}
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="flex-1 overflow-y-auto p-0 scrollbar-hide">
+                <div className="p-8">
+                  <div
+                    className="prose prose-invert max-w-none text-foreground leading-loose text-base"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(selectedEntry.content.replace(/\n/g, '<br/>')),
+                    }}
+                  />
+                </div>
+
+                {/* AI Analysis Section */}
+                {(selectedEntry.conciseSummary || (selectedEntry.topics && selectedEntry.topics.length > 0)) && (
+                  <div className="mx-8 mb-8 p-6 bg-blue-500/10 border border-blue-500/20 rounded-[1.25rem]">
+                    <h4 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-blue-400 mb-4">
+                      <Sparkles className="h-4 w-4" /> AI Vault Analysis
+                    </h4>
+                    
+                    {selectedEntry.conciseSummary && (
+                      <div className="mb-4">
+                        <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">TL;DR</h5>
+                        <p className="text-sm text-blue-100 leading-relaxed bg-black/20 p-4 rounded-xl border border-white/5">{selectedEntry.conciseSummary}</p>
+                      </div>
+                    )}
+
+                    {selectedEntry.topics && selectedEntry.topics.length > 0 && (
+                      <div>
+                        <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Extracted Themes</h5>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedEntry.topics.map((topic, i) => (
+                            <span key={i} className="px-3 py-1.5 bg-black/20 text-blue-200 text-xs font-medium rounded-lg border border-blue-500/10 shadow-sm">
+                              {topic}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
             </Card>
           ) : (
-            <div className="h-64 flex flex-col items-center justify-center text-muted border border-dashed border-border rounded-2xl">
-              <BookText className="h-8 w-8 text-slate-400 mb-2" />
-              <p className="text-sm">Select an entry or compose a new reflection.</p>
-            </div>
+            <Card className="flex-1 flex flex-col items-center justify-center p-8 border border-dashed border-white/10 bg-white/5">
+              <div className="h-16 w-16 rounded-3xl bg-white/5 flex items-center justify-center mb-6 shadow-glow">
+                <BookText className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">Select an entry</h3>
+              <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">
+                Choose an existing log from the sidebar to view it, or create a new one to securely record your thoughts.
+              </p>
+              <Button onClick={() => setIsCreating(true)} className="rounded-full px-6 gap-2 shadow-glow">
+                <Plus className="h-4 w-4" /> New Entry
+              </Button>
+            </Card>
           )}
         </div>
       </div>

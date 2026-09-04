@@ -87,89 +87,51 @@ const DashboardPage: React.FC = () => {
   }, [currentUser]);
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-10 animate-fade-in pb-12">
       {/* Header and Quick Actions */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-2 border-b border-border/60">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/10">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-display text-primary-dark">
+          <h1 className="text-4xl font-bold tracking-tight font-display text-foreground">
             {greeting}, {displayName}.
           </h1>
-          <p className="text-sm text-secondary mt-1">
-            Your second brain is active and isolated under your personal UID key.
+          <p className="text-base text-muted-foreground mt-2">
+            Your second brain is active and cryptographically isolated.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2.5">
-          <Link to="/chat">
-            <Button variant="default" size="sm" className="gap-2 shadow-sm">
-              <MessageSquare className="h-4 w-4" /> Start Dialogue
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <Link to="/chat" className="w-full md:w-auto">
+            <Button variant="outline" className="w-full gap-2 rounded-full h-11 px-5 border-white/10">
+              <MessageSquare className="h-4 w-4" /> Chat
             </Button>
           </Link>
-          <Link to="/journal">
-            <Button variant="secondary" size="sm" className="gap-2">
+          <Link to="/journal" className="w-full md:w-auto">
+            <Button className="w-full gap-2 rounded-full h-11 px-5">
               <Plus className="h-4 w-4" /> New Entry
-            </Button>
-          </Link>
-          <Link to="/memory-graph">
-            <Button variant="outline" size="sm" className="gap-2 text-accent border-sky-200 hover:bg-sky-50">
-              <Network className="h-4 w-4" /> View Graph
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Stats Counter Grid */}
+      {/* Vault Status Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="hover:border-sky-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Total Entries</span>
-            <div className="h-7 w-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-              <BookText className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary-dark">{stats.journals}</div>
-            <p className="text-[11px] text-muted mt-1">Archived reflections</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:border-sky-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Memories</span>
-            <div className="h-7 w-7 rounded-lg bg-sky-100 flex items-center justify-center text-accent">
-              <BrainCircuit className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary-dark">{stats.memories}</div>
-            <p className="text-[11px] text-muted mt-1">Extracted atomic facts</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:border-sky-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Active Goals</span>
-            <div className="h-7 w-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
-              <Target className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary-dark">{stats.goals}</div>
-            <p className="text-[11px] text-muted mt-1">Tracked milestones</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:border-sky-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Decisions</span>
-            <div className="h-7 w-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
-              <GitMerge className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary-dark">{stats.decisions}</div>
-            <p className="text-[11px] text-muted mt-1">Logged with retrospectives</p>
-          </CardContent>
-        </Card>
+        {[
+          { icon: BookText, label: 'Journals', value: stats.journals, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+          { icon: BrainCircuit, label: 'Memories', value: stats.memories, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+          { icon: Target, label: 'Goals', value: stats.goals, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+          { icon: GitMerge, label: 'Decisions', value: stats.decisions, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        ].map((stat, i) => (
+          <Card key={i} className="border-white/5 bg-white/5 backdrop-blur-md shadow-sm hover:bg-white/10 transition-colors">
+            <CardContent className="p-5 flex flex-col items-start gap-4">
+              <div className={`h-10 w-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
+                <stat.icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-3xl font-display font-bold text-foreground">{stat.value}</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Main Split: Ask My Memory RAG + Sidebars */}
@@ -178,8 +140,8 @@ const DashboardPage: React.FC = () => {
         <div className="lg:col-span-7 space-y-6">
           <AskMemoryCard />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-4">
+          <Card className="border-white/5 bg-white/5 backdrop-blur-md">
+            <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-white/5">
               <div>
                 <CardTitle className="text-base font-semibold">Recent Vault Activity</CardTitle>
                 <CardDescription className="text-xs">Direct audit log of latest encrypted records</CardDescription>
@@ -190,28 +152,28 @@ const DashboardPage: React.FC = () => {
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="space-y-3">
                 {recentActivities.map((act) => (
                   <div
                     key={act.id}
-                    className="flex items-start gap-3 p-3 rounded-xl border border-border bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                    className="flex items-start gap-3 p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors"
                   >
-                    <div className="h-8 w-8 rounded-lg bg-white border border-border flex items-center justify-center text-primary shadow-subtle shrink-0 mt-0.5">
+                    <div className="h-8 w-8 rounded-lg bg-black/20 border border-white/5 flex items-center justify-center text-foreground shrink-0 mt-0.5">
                       {act.type === 'journal' ? (
-                        <BookText className="h-4 w-4 text-accent" />
+                        <BookText className="h-4 w-4 text-blue-400" />
                       ) : act.type === 'memory' ? (
-                        <BrainCircuit className="h-4 w-4 text-purple-500" />
+                        <BrainCircuit className="h-4 w-4 text-purple-400" />
                       ) : (
-                        <GitMerge className="h-4 w-4 text-emerald-500" />
+                        <GitMerge className="h-4 w-4 text-emerald-400" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="text-xs font-semibold text-primary truncate">{act.title}</span>
-                        <span className="text-[10px] text-muted shrink-0">{act.time}</span>
+                        <span className="text-xs font-semibold text-foreground truncate">{act.title}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">{act.time}</span>
                       </div>
-                      <p className="text-xs text-secondary line-clamp-2">{act.snippet}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{act.snippet}</p>
                     </div>
                   </div>
                 ))}
@@ -222,67 +184,39 @@ const DashboardPage: React.FC = () => {
 
         {/* Right Column: Emerging Themes & Graph Callout */}
         <div className="lg:col-span-5 space-y-6">
-          {/* Emerging Theme Card */}
-          {emergingTheme ? (
-            <Card className="bg-gradient-to-br from-sky-50/50 to-surface border-sky-200/80 shadow-subtle">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2 text-accent">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-xs font-semibold uppercase tracking-wider">Detected Recurring Theme</span>
-                </div>
-                <CardTitle className="text-lg font-bold">{emergingTheme.theme}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-xs text-secondary leading-relaxed">
-                  {emergingTheme.summary}
-                </p>
-                {emergingTheme.suggestedReflection && (
-                  <div className="p-3 rounded-xl bg-white border border-sky-100 text-xs text-primary-dark">
-                    <span className="font-semibold text-accent block mb-1">Suggested Reflection:</span>
-                    "{emergingTheme.suggestedReflection}"
-                  </div>
-                )}
-                <Link to="/insights" className="block pt-1">
-                  <Button variant="outline" size="sm" className="w-full text-xs gap-1.5 border-sky-200 text-accent hover:bg-sky-50">
-                    Explore All Insights <ArrowRight className="h-3 w-3" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-gradient-to-br from-slate-50 to-surface border-border shadow-subtle">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2 text-muted">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-xs font-semibold uppercase tracking-wider">Theme Analysis Pending</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-secondary leading-relaxed">
-                  Record more journals and decisions to allow MindVault to detect patterns and generate insights.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Graph Visualization Callout */}
-          <Card className="bg-gradient-to-br from-purple-50/40 to-surface border-purple-200/70 shadow-subtle">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2 text-purple-600">
-                <Network className="h-4 w-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Knowledge Topology</span>
-              </div>
-              <CardTitle className="text-lg font-bold">Your Memory Network</CardTitle>
+          <Card className="h-full border-white/5 bg-white/5 backdrop-blur-md">
+            <CardHeader className="pb-3 border-b border-white/5">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BrainCircuit className="h-5 w-5 text-purple-400" />
+                Emerging Themes
+              </CardTitle>
+              <CardDescription>Patterns synthesized from your recent activity</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-xs text-secondary leading-relaxed">
-                MindVault automatically models relationships between your memories, decisions, and goals as an interconnected graph.
-              </p>
-              <Link to="/memory-graph" className="block">
-                <Button variant="default" size="sm" className="w-full text-xs gap-1.5 bg-purple-700 hover:bg-purple-800 text-white">
-                  Open Interactive Graph <ArrowRight className="h-3 w-3" />
-                </Button>
-              </Link>
+            <CardContent className="pt-6">
+              {emergingTheme ? (
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 text-purple-300 text-xs font-semibold uppercase tracking-wider">
+                    <Sparkles className="h-3 w-3" /> Synthesis Active
+                  </div>
+                  <h4 className="font-semibold text-lg text-foreground">{emergingTheme.title}</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{emergingTheme.description}</p>
+                  
+                  {emergingTheme.tags && (
+                     <div className="flex flex-wrap gap-2 pt-2">
+                        {emergingTheme.tags.map((t: string) => (
+                           <span key={t} className="text-xs px-2.5 py-1 rounded-md bg-white/10 text-muted-foreground">{t}</span>
+                        ))}
+                     </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-10 space-y-3">
+                  <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center mx-auto">
+                    <Sparkles className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Log more entries to generate insights.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

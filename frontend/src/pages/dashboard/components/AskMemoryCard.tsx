@@ -82,22 +82,22 @@ export const AskMemoryCard: React.FC = () => {
   };
 
   return (
-    <Card className="h-full flex flex-col border-accent/20 bg-gradient-to-br from-surface to-sky-50/20">
-      <CardHeader className="pb-3">
+    <Card className="h-full flex flex-col border-white/5 bg-white/5 backdrop-blur-md shadow-sm hover:bg-white/10 transition-colors">
+      <CardHeader className="pb-3 border-b border-white/5">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <div className="h-7 w-7 rounded-lg bg-sky-100 text-accent flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shadow-glow">
               <BrainCircuit className="h-4 w-4" />
             </div>
             <span>Ask My Memory</span>
           </CardTitle>
-          <span className="text-[10px] font-semibold text-accent bg-accent-light px-2 py-0.5 rounded-full uppercase tracking-wider">
+          <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full uppercase tracking-wider">
             RAG Recall
           </span>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col gap-4">
+      <CardContent className="flex-1 flex flex-col gap-4 pt-6">
         {/* Search input form */}
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
@@ -105,24 +105,24 @@ export const AskMemoryCard: React.FC = () => {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             disabled={isLoading}
-            className="flex-1 text-sm bg-white"
+            className="flex-1 bg-white/5 border-white/10 rounded-xl h-12"
           />
-          <Button type="submit" variant="accent" disabled={isLoading || !question.trim()} className="px-4">
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+          <Button type="submit" variant="default" disabled={isLoading || !question.trim()} className="px-5 rounded-xl h-12 shadow-glow">
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-5 w-5" />}
           </Button>
         </form>
 
         {/* Suggestion pills */}
         {!response && !isLoading && !error && (
-          <div className="space-y-2">
-            <p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Suggested queries</p>
-            <div className="flex flex-wrap gap-1.5">
+          <div className="space-y-2 mt-2">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Suggested queries</p>
+            <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((suggestion) => (
                 <button
                   key={suggestion}
                   type="button"
                   onClick={() => handleAsk(suggestion)}
-                  className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors text-left"
+                  className="text-xs bg-black/20 hover:bg-white/10 text-muted-foreground hover:text-foreground px-3 py-2 rounded-lg border border-white/5 transition-colors text-left"
                 >
                   {suggestion}
                 </button>
@@ -133,15 +133,17 @@ export const AskMemoryCard: React.FC = () => {
 
         {/* Loading state */}
         {isLoading && (
-          <div className="flex-1 flex flex-col items-center justify-center text-muted space-y-2 py-6 animate-pulse">
-            <BrainCircuit className="h-8 w-8 text-accent/60 animate-bounce" />
-            <span className="text-xs font-medium text-slate-500">Retrieving and synthesizing records from your vault...</span>
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground space-y-4 py-8 animate-pulse">
+            <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <BrainCircuit className="h-6 w-6 text-blue-400 animate-bounce" />
+            </div>
+            <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground/80">Synthesizing records...</span>
           </div>
         )}
 
         {/* Error notification */}
         {error && (
-          <div className="p-3 rounded-lg bg-error/10 text-error text-xs flex items-center gap-2 border border-error/20">
+          <div className="p-3 rounded-xl bg-destructive/10 text-destructive text-sm flex items-center gap-2 border border-destructive/20 font-medium mt-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
