@@ -7,6 +7,7 @@ interface MockUser {
   uid: string;
   email: string | null;
   displayName: string | null;
+  emailVerified: boolean;
   getIdToken: (forceRefresh?: boolean) => Promise<string>;
 }
 
@@ -44,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             uid: devToken.replace('TEST_TOKEN_', ''),
             email: devEmail,
             displayName: devEmail.split('@')[0],
+            emailVerified: true,
             getIdToken: async () => devToken,
           });
         } else {
@@ -58,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             uid: devToken.replace('TEST_TOKEN_', ''),
             email: devEmail,
             displayName: devEmail.split('@')[0],
+            emailVerified: true,
             getIdToken: async () => devToken,
           });
         } else {
@@ -79,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       uid,
       email,
       displayName: email.split('@')[0],
+      emailVerified: true,
       getIdToken: async () => token,
     });
   };

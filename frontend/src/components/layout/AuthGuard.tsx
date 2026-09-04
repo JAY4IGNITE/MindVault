@@ -20,5 +20,9 @@ export const AuthGuard: React.FC = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  if (!currentUser.emailVerified) {
+    return <Navigate to="/verify-email" replace />;
+  }
+
   return <Outlet />;
 };

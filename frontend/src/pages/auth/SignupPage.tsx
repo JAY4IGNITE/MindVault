@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Brain, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Brain, AlertCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const signupSchema = z
@@ -43,7 +43,12 @@ const SignupPage: React.FC = () => {
     setAuthError(null);
 
     try {
-      await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const userCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      try {
+        await sendEmailVerification(userCred.user);
+      } catch (verifyErr) {
+        console.warn('Failed to send verification email:', verifyErr);
+      }
       navigate('/dashboard');
     } catch (error: any) {
       console.warn('Firebase signup failed, offering dev login fallback:', error);
