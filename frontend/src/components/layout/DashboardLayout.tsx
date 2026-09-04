@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/Button';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -142,6 +143,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                   <span className="text-xs text-muted-foreground truncate">{currentUser?.email}</span>
                 </div>
               </div>
+              <ThemeToggle />
             </div>
             <Button
               variant="outline"

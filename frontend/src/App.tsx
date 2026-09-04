@@ -5,6 +5,7 @@ import { AuthGuard } from './components/layout/AuthGuard';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
+import { ThemeProvider } from './contexts/ThemeProvider';
 
 // Eager load critical initial public pages
 import LandingPage from './pages/LandingPage';
@@ -45,7 +46,8 @@ const PageLoader: React.FC = () => (
 
 const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
+    <ThemeProvider defaultTheme="dark">
+      <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
           <Suspense fallback={<PageLoader />}>
@@ -83,6 +85,7 @@ const App: React.FC = () => {
         </Router>
       </AuthProvider>
     </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 

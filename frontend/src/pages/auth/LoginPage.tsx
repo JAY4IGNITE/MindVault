@@ -8,6 +8,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { ThemeToggle } from '../../components/ui/ThemeToggle';
 import { Brain, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -75,6 +76,10 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-4">
+      <div className="absolute top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+
       {/* Intense Ambient Background */}
       <div className="absolute inset-0 pointer-events-none opacity-60">
         <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[140px]" />
