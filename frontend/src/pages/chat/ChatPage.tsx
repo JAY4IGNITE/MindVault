@@ -139,8 +139,8 @@ const ChatPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-foreground/10 rounded-xl flex items-center justify-center shadow-sm border border-foreground/10 overflow-hidden p-1.5">
-                <img src="/logo.png" alt="MindVault AI" className="h-full w-full object-contain drop-shadow-sm" />
+              <div className="h-10 w-10 flex items-center justify-center shrink-0">
+                <img src="/logo.png" alt="MindVault AI" className="h-full w-full object-contain" />
               </div>
               <h1 className="text-2xl font-bold font-display text-primary-dark">
                 AI Reflection Dialogue
@@ -193,16 +193,15 @@ const ChatPage: React.FC = () => {
               )}
             >
               {/* Avatar */}
-              <div
-                className={cn(
-                  'h-8 w-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-subtle',
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-foreground/10 text-foreground'
-                )}
-              >
-                {msg.role === 'user' ? <UserIcon className="h-4 w-4" /> : <img src="/logo.png" alt="AI" className="h-4 w-4 object-contain drop-shadow-sm" />}
-              </div>
+              {msg.role === 'user' ? (
+                <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-foreground/10 bg-foreground/5 text-foreground">
+                  <UserIcon className="h-4 w-4" />
+                </div>
+              ) : (
+                <div className="h-8 w-8 flex items-center justify-center shrink-0">
+                  <img src="/logo.png" alt="AI" className="h-6 w-6 object-contain" />
+                </div>
+              )}
 
               {/* Message Bubble */}
               <div
@@ -231,8 +230,8 @@ const ChatPage: React.FC = () => {
           {/* Thinking indicator */}
           {isLoading && (
             <div className="flex gap-3 mr-auto max-w-[80%] animate-pulse">
-              <div className="h-8 w-8 rounded-xl bg-foreground/10 text-foreground flex items-center justify-center shrink-0">
-                <img src="/logo.png" alt="AI" className="h-4 w-4 object-contain drop-shadow-sm" />
+              <div className="h-8 w-8 flex items-center justify-center shrink-0">
+                <img src="/logo.png" alt="AI" className="h-6 w-6 object-contain" />
               </div>
               <div className="bg-foreground/5 border border-foreground/10 rounded-2xl rounded-tl-xs p-4 flex items-center gap-2 text-muted-foreground text-xs">
                 <Loader2 className="h-4 w-4 animate-spin text-foreground" />
