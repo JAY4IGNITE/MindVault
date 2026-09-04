@@ -13,6 +13,8 @@
   [![Firebase](https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
   [![Google Gemini](https://img.shields.io/badge/AI-Google%20Gemini-4285F4?logo=google&logoColor=white)](https://aistudio.google.com/)
 
+  ### [🚀 Try the Live Demo](https://mindvault-39809.web.app/)
+
 </div>
 
 ---
