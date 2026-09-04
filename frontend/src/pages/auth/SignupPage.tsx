@@ -90,9 +90,9 @@ const SignupPage: React.FC = () => {
         <div className="absolute top-[40%] -left-[10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[140px]" />
       </div>
 
-      <div className="w-full max-w-[496px] relative z-10 animate-slide-up px-4 sm:px-0 py-8 sm:py-0">
-        <div className="flex flex-col items-center space-y-2.5 text-center mb-5">
-          <div className="h-[44px] w-[44px] flex items-center justify-center">
+      <div className="w-full max-w-[496px] relative z-10 animate-slide-up px-4 sm:px-0 py-4 sm:py-0">
+        <div className="flex flex-col items-center space-y-2 text-center mb-4">
+          <div className="h-[56px] w-[56px] flex items-center justify-center">
             <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
           </div>
           <div>
@@ -102,12 +102,12 @@ const SignupPage: React.FC = () => {
         </div>
 
         <Card className="border-foreground/10 bg-background/60 backdrop-blur-2xl shadow-2xl">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle>Sign Up</CardTitle>
             <CardDescription className="text-xs">Create a new vault to securely store your data.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
+          <CardContent className="space-y-3 pb-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-2.5">
               {authError && (
                 <div className="p-3 rounded-xl bg-destructive/10 text-destructive text-sm flex items-center gap-2 border border-destructive/20 font-medium">
                   <AlertCircle className="h-4 w-4 shrink-0" />
@@ -145,7 +145,7 @@ const SignupPage: React.FC = () => {
                 disabled={isLoading}
               />
 
-              <Button type="submit" className="w-full mt-1.5 text-sm h-11 rounded-xl" isLoading={isLoading}>
+              <Button type="submit" className="w-full mt-1.5 text-sm h-10 rounded-xl" isLoading={isLoading}>
                 Create Secure Vault
               </Button>
             </form>
@@ -162,7 +162,7 @@ const SignupPage: React.FC = () => {
             <Button
               type="button"
               variant="outline"
-              className="w-full gap-3 h-11 rounded-xl"
+              className="w-full gap-3 h-10 rounded-xl"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
             >

@@ -88,7 +88,7 @@ const LoginPage: React.FC = () => {
 
       <div className="w-full max-w-[496px] relative z-10 animate-slide-up px-4 sm:px-0 py-8 sm:py-0">
         <div className="flex flex-col items-center space-y-2.5 text-center mb-6">
-          <div className="h-[44px] w-[44px] flex items-center justify-center">
+          <div className="h-[56px] w-[56px] flex items-center justify-center">
             <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
           </div>
           <div>
@@ -131,7 +131,7 @@ const LoginPage: React.FC = () => {
                 disabled={isLoading}
               />
 
-              <Button type="submit" className="w-full mt-2 text-sm h-12 rounded-xl" isLoading={isLoading}>
+              <Button type="submit" className="w-full mt-2 text-sm h-10 rounded-xl" isLoading={isLoading}>
                 Sign In to Vault
               </Button>
             </form>
@@ -148,7 +148,7 @@ const LoginPage: React.FC = () => {
             <Button
               type="button"
               variant="outline"
-              className="w-full gap-3 h-11 rounded-xl"
+              className="w-full gap-3 h-10 rounded-xl"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
             >
