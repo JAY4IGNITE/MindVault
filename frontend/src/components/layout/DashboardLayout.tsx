@@ -228,27 +228,39 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ navItems, secondaryNavI
       </div>
     </motion.div>
 
-    <div className="p-5 border-t border-foreground/[0.04] bg-transparent">
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-sm font-semibold border border-foreground/10 shadow-sm">
-            {userInitial}
+    {/* Detached Floating Account Panel */}
+    <div className="p-3.5 sm:p-4 pt-2 shrink-0">
+      <div className="rounded-[22px] p-4 bg-white/95 dark:bg-[#141417]/95 backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.09] shadow-[0_4px_20px_-2px_rgba(0,0,0,0.06)] dark:shadow-[0_12px_28px_-4px_rgba(0,0,0,0.55)] transition-all duration-200">
+        {/* User profile & Theme toggle */}
+        <div className="flex items-center justify-between gap-3 mb-3.5">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-white text-sm font-semibold border border-white/10 shadow-sm ring-1 ring-foreground/10">
+              {userInitial}
+            </div>
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-sm font-semibold text-foreground truncate leading-snug">
+                {currentUser?.displayName || 'Vault User'}
+              </span>
+              <span className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
+                {currentUser?.email}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col min-w-0 flex-1 mr-2">
-            <span className="text-sm font-medium text-foreground truncate">{currentUser?.displayName || 'Vault User'}</span>
-            <span className="text-[11px] text-muted-foreground truncate">{currentUser?.email}</span>
+          <div className="shrink-0">
+            <ThemeToggle />
           </div>
         </div>
-        <ThemeToggle />
+
+        {/* Lock Vault Action */}
+        <Button
+          variant="outline"
+          className="group w-full justify-center gap-2 h-9 rounded-xl border-foreground/10 bg-foreground/[0.03] hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-foreground font-medium text-xs transition-all duration-200 ease-out shadow-none"
+          onClick={handleSignOut}
+        >
+          <LogOut className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-destructive" />
+          <span>Lock Vault</span>
+        </Button>
       </div>
-      <Button
-        variant="outline"
-        className="w-full justify-start gap-2.5 h-10 rounded-xl border-foreground/10 bg-foreground/[0.03] hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-foreground font-medium text-xs sm:text-[13px] transition-all duration-200 ease-out shadow-none"
-        onClick={handleSignOut}
-      >
-        <LogOut className="h-4 w-4 text-muted-foreground group-hover:text-destructive" />
-        <span>Lock Vault</span>
-      </Button>
     </div>
   </div>
 );
