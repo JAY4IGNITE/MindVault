@@ -158,8 +158,8 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 lg:pl-2">
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:py-10">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-8">
           <div className="mx-auto max-w-6xl">
             {children}
           </div>
