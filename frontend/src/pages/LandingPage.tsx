@@ -9,13 +9,13 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-background font-sans selection:bg-accent/20">
       {/* Header */}
       <header className="py-5 px-6 md:px-12 flex justify-between items-center max-w-7xl mx-auto w-full border-b border-foreground/10 bg-background/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-foreground/10 text-foreground flex items-center justify-center shadow-subtle p-1.5 overflow-hidden">
-            <img src="/logo.png" alt="MindVault AI Logo" className="h-full w-full object-contain drop-shadow-sm" />
+        <div className="flex items-center gap-[14px]">
+          <div className="shrink-0 flex items-center justify-center w-[38px] h-[38px] md:w-[46px] md:h-[46px] rounded-[12px] md:rounded-[14px] bg-foreground/[0.02] border border-foreground/[0.06] shadow-sm">
+            <img src="/logo.png" alt="MindVault AI Logo" className="w-[70%] h-[70%] object-contain" />
           </div>
-          <div>
-            <span className="font-display font-bold text-xl tracking-tight text-foreground block leading-none">MindVault AI</span>
-            <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">Zero-Trust AI Brain</span>
+          <div className="flex flex-col justify-center mt-[2px]">
+            <span className="font-display font-bold text-xl md:text-[22px] tracking-tight text-foreground leading-none">MindVault AI</span>
+            <span className="text-[10px] uppercase font-medium text-muted-foreground tracking-[0.1em] mt-1 leading-none">Zero-Trust AI Brain</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
