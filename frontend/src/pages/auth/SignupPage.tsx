@@ -26,7 +26,6 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const { setDevUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -51,17 +50,6 @@ const SignupPage: React.FC = () => {
       }
       navigate('/dashboard');
     } catch (error: any) {
-      console.warn('Firebase signup failed, offering dev login fallback:', error);
-      if (
-        error.code === 'auth/invalid-api-key' ||
-        error.code === 'auth/network-request-failed' ||
-        error.code === 'auth/configuration-not-found'
-      ) {
-        setDevUser(data.email);
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-
       let errorMessage = 'Failed to create account.';
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'An account with this email already exists.';
@@ -72,11 +60,6 @@ const SignupPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickDemoAccess = () => {
-    setDevUser('alex.mercer@mindvault.ai');
-    navigate('/dashboard', { replace: true });
   };
 
   return (
@@ -138,24 +121,6 @@ const SignupPage: React.FC = () => {
                 Initialize Private Vault
               </Button>
             </form>
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-surface px-2 text-muted font-medium">Local Dev Fast-Track</span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full gap-2 text-xs border-dashed border-accent/40 text-accent hover:bg-accent-light/40"
-              onClick={handleQuickDemoAccess}
-            >
-              <Sparkles className="h-3.5 w-3.5" /> Instant Demo Session (No Firebase config required)
-            </Button>
 
             <div className="text-center text-xs text-secondary pt-2">
               Already have a vault?{' '}
