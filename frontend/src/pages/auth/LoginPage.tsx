@@ -88,8 +88,8 @@ const LoginPage: React.FC = () => {
 
       <div className="w-full max-w-[420px] relative z-10 animate-slide-up">
         <div className="flex flex-col items-center space-y-4 text-center mb-8">
-          <div className="h-16 w-16 rounded-[1.25rem] bg-white/10 flex items-center justify-center border border-white/20 shadow-glow backdrop-blur-md">
-            <Brain className="h-8 w-8 text-white" />
+          <div className="h-16 w-16 rounded-[1.25rem] bg-foreground/10 flex items-center justify-center border border-foreground/20 shadow-glow backdrop-blur-md">
+            <Brain className="h-8 w-8 text-foreground" />
           </div>
           <div>
             <h1 className="text-3xl font-display font-bold text-foreground">Welcome to MindVault</h1>
@@ -97,7 +97,7 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        <Card className="border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl">
+        <Card className="border-foreground/10 bg-background/60 backdrop-blur-2xl shadow-2xl">
           <CardHeader className="pb-4">
             <CardTitle>Sign In</CardTitle>
             <CardDescription>Enter your credentials to decrypt your vault.</CardDescription>
@@ -138,7 +138,7 @@ const LoginPage: React.FC = () => {
 
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-white/10" />
+                <span className="w-full border-t border-foreground/10" />
               </div>
               <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-bold">
                 <span className="bg-[#0b0c0e] px-3 text-muted-foreground/70">Or continue with</span>

@@ -55,8 +55,8 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         className={cn(
           'flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 group',
           isActive
-            ? 'bg-white/10 text-foreground shadow-glow'
-            : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
+            ? 'bg-foreground/10 text-foreground shadow-glow'
+            : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
         )}
         onClick={() => setIsMobileMenuOpen(false)}
       >
@@ -80,14 +80,14 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       </div>
 
       {/* Mobile Top Bar */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b border-white/10 glass-panel sticky top-0 z-50">
+      <div className="lg:hidden flex items-center justify-between p-4 border-b border-foreground/10 glass-panel sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center text-foreground border border-white/10">
+          <div className="h-9 w-9 rounded-xl bg-foreground/10 flex items-center justify-center text-foreground border border-foreground/10">
             <Brain className="h-5 w-5" />
           </div>
           <span className="font-display font-semibold text-lg text-foreground tracking-tight">MindVault</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="hover:bg-white/10 text-foreground">
+        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="hover:bg-foreground/10 text-foreground">
           {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
@@ -108,9 +108,9 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           'lg:translate-x-0 lg:relative lg:p-4 lg:w-[320px]'
         )}
       >
-        <div className="flex-1 h-full flex flex-col bg-background/40 lg:bg-white/5 backdrop-blur-2xl border-r lg:border border-white/10 lg:rounded-3xl shadow-2xl overflow-hidden">
+        <div className="flex-1 h-full flex flex-col bg-background/40 lg:bg-foreground/[0.02] backdrop-blur-2xl border-r lg:border border-foreground/10 lg:rounded-3xl shadow-2xl overflow-hidden">
           <div className="p-6 hidden lg:flex items-center gap-4">
-            <div className="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center text-foreground border border-white/10 shadow-glow">
+            <div className="h-10 w-10 rounded-2xl bg-foreground/10 flex items-center justify-center text-foreground border border-foreground/10 shadow-glow">
               <Brain className="h-6 w-6" />
             </div>
             <div>
@@ -132,10 +132,10 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
             </div>
           </div>
 
-          <div className="p-4 border-t border-white/10 bg-black/20">
+          <div className="p-4 border-t border-foreground/10 bg-foreground/5">
             <div className="flex items-center justify-between px-2 mb-4">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-sm font-semibold border border-white/20 shadow-md">
+                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-sm font-semibold border border-foreground/20 shadow-md">
                   {userInitial}
                 </div>
                 <div className="flex flex-col max-w-[120px]">
@@ -147,7 +147,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
             </div>
             <Button
               variant="outline"
-              className="w-full justify-start gap-3 border-white/10 bg-white/5 hover:bg-destructive/20 hover:text-destructive hover:border-destructive/30 transition-colors"
+              className="w-full justify-start gap-3 border-foreground/10 bg-foreground/5 hover:bg-destructive/20 hover:text-destructive hover:border-destructive/30 transition-colors"
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4" />

@@ -82,8 +82,8 @@ export const AskMemoryCard: React.FC = () => {
   };
 
   return (
-    <Card className="h-full flex flex-col border-white/5 bg-white/5 backdrop-blur-md shadow-sm hover:bg-white/10 transition-colors">
-      <CardHeader className="pb-3 border-b border-white/5">
+    <Card className="h-full flex flex-col border-foreground/5 bg-foreground/5 backdrop-blur-md shadow-sm hover:bg-foreground/10 transition-colors">
+      <CardHeader className="pb-3 border-b border-foreground/5">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <div className="h-8 w-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shadow-glow">
@@ -105,7 +105,7 @@ export const AskMemoryCard: React.FC = () => {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             disabled={isLoading}
-            className="flex-1 bg-white/5 border-white/10 rounded-xl h-12"
+            className="flex-1 bg-foreground/5 border-foreground/10 rounded-xl h-12"
           />
           <Button type="submit" variant="default" disabled={isLoading || !question.trim()} className="px-5 rounded-xl h-12 shadow-glow">
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-5 w-5" />}
@@ -122,7 +122,7 @@ export const AskMemoryCard: React.FC = () => {
                   key={suggestion}
                   type="button"
                   onClick={() => handleAsk(suggestion)}
-                  className="text-xs bg-black/20 hover:bg-white/10 text-muted-foreground hover:text-foreground px-3 py-2 rounded-lg border border-white/5 transition-colors text-left"
+                  className="text-xs bg-foreground/[0.05] hover:bg-foreground/10 text-muted-foreground hover:text-foreground px-3 py-2 rounded-lg border border-foreground/5 transition-colors text-left"
                 >
                   {suggestion}
                 </button>

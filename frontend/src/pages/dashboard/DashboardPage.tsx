@@ -89,7 +89,7 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-10 animate-fade-in pb-12">
       {/* Header and Quick Actions */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-foreground/10">
         <div>
           <h1 className="text-4xl font-bold tracking-tight font-display text-foreground">
             {greeting}, {displayName}.
@@ -100,7 +100,7 @@ const DashboardPage: React.FC = () => {
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Link to="/chat" className="w-full md:w-auto">
-            <Button variant="outline" className="w-full gap-2 rounded-full h-11 px-5 border-white/10">
+            <Button variant="outline" className="w-full gap-2 rounded-full h-11 px-5 border-foreground/10">
               <MessageSquare className="h-4 w-4" /> Chat
             </Button>
           </Link>
@@ -120,7 +120,7 @@ const DashboardPage: React.FC = () => {
           { icon: Target, label: 'Goals', value: stats.goals, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
           { icon: GitMerge, label: 'Decisions', value: stats.decisions, color: 'text-amber-500', bg: 'bg-amber-500/10' },
         ].map((stat, i) => (
-          <Card key={i} className="border-white/5 bg-white/5 backdrop-blur-md shadow-sm hover:bg-white/10 transition-colors">
+          <Card key={i} className="border-foreground/5 bg-foreground/5 backdrop-blur-md shadow-sm hover:bg-foreground/10 transition-colors">
             <CardContent className="p-5 flex flex-col items-start gap-4">
               <div className={`h-10 w-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
                 <stat.icon className="h-5 w-5" />
@@ -140,8 +140,8 @@ const DashboardPage: React.FC = () => {
         <div className="lg:col-span-7 space-y-6">
           <AskMemoryCard />
 
-          <Card className="border-white/5 bg-white/5 backdrop-blur-md">
-            <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-white/5">
+          <Card className="border-foreground/5 bg-foreground/5 backdrop-blur-md">
+            <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-foreground/5">
               <div>
                 <CardTitle className="text-base font-semibold">Recent Vault Activity</CardTitle>
                 <CardDescription className="text-xs">Direct audit log of latest encrypted records</CardDescription>
@@ -157,9 +157,9 @@ const DashboardPage: React.FC = () => {
                 {recentActivities.map((act) => (
                   <div
                     key={act.id}
-                    className="flex items-start gap-3 p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors"
+                    className="flex items-start gap-3 p-3 rounded-xl border border-foreground/5 bg-foreground/5 hover:bg-foreground/10 transition-colors"
                   >
-                    <div className="h-8 w-8 rounded-lg bg-black/20 border border-white/5 flex items-center justify-center text-foreground shrink-0 mt-0.5">
+                    <div className="h-8 w-8 rounded-lg bg-foreground/10 border border-foreground/5 flex items-center justify-center text-foreground shrink-0 mt-0.5">
                       {act.type === 'journal' ? (
                         <BookText className="h-4 w-4 text-blue-400" />
                       ) : act.type === 'memory' ? (
@@ -184,8 +184,8 @@ const DashboardPage: React.FC = () => {
 
         {/* Right Column: Emerging Themes & Graph Callout */}
         <div className="lg:col-span-5 space-y-6">
-          <Card className="h-full border-white/5 bg-white/5 backdrop-blur-md">
-            <CardHeader className="pb-3 border-b border-white/5">
+          <Card className="h-full border-foreground/5 bg-foreground/5 backdrop-blur-md">
+            <CardHeader className="pb-3 border-b border-foreground/5">
               <CardTitle className="text-lg flex items-center gap-2">
                 <BrainCircuit className="h-5 w-5 text-purple-400" />
                 Emerging Themes
@@ -204,14 +204,14 @@ const DashboardPage: React.FC = () => {
                   {emergingTheme.tags && (
                      <div className="flex flex-wrap gap-2 pt-2">
                         {emergingTheme.tags.map((t: string) => (
-                           <span key={t} className="text-xs px-2.5 py-1 rounded-md bg-white/10 text-muted-foreground">{t}</span>
+                           <span key={t} className="text-xs px-2.5 py-1 rounded-md bg-foreground/10 text-muted-foreground">{t}</span>
                         ))}
                      </div>
                   )}
                 </div>
               ) : (
                 <div className="text-center py-10 space-y-3">
-                  <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center mx-auto">
+                  <div className="h-12 w-12 rounded-full bg-foreground/5 flex items-center justify-center mx-auto">
                     <Sparkles className="h-6 w-6 text-muted-foreground" />
                   </div>
                   <p className="text-sm text-muted-foreground">Log more entries to generate insights.</p>
