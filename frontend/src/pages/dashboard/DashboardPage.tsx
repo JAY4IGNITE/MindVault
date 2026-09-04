@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { BookText, BrainCircuit, Target, GitMerge, Plus, Sparkles, MessageSquare, Network, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AskMemoryCard } from './components/AskMemoryCard';
 import { collection, query, orderBy, limit, getDocs, getCountFromServer } from 'firebase/firestore';
