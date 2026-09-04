@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
+import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 
 // Lazy load private feature pages for code splitting & faster bundle performance
 const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
@@ -53,6 +54,7 @@ const App: React.FC = () => {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
 
               {/* Protected Routes (AuthGuard) */}
               <Route element={<AuthGuard />}>
