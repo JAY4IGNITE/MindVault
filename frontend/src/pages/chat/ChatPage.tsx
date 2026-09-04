@@ -138,10 +138,15 @@ const ChatPage: React.FC = () => {
       {/* Top action header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-display text-primary-dark flex items-center gap-2">
-            <Brain className="h-6 w-6 text-accent" /> AI Reflection Dialogue
-          </h1>
-          <p className="text-xs text-secondary">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-foreground/10 rounded-xl flex items-center justify-center shadow-sm border border-foreground/10 overflow-hidden p-1.5">
+                <img src="/logo.png" alt="MindVault AI" className="h-full w-full object-contain drop-shadow-sm" />
+              </div>
+              <h1 className="text-2xl font-bold font-display text-primary-dark">
+                AI Reflection Dialogue
+              </h1>
+            </div>
+          <p className="text-xs text-secondary mt-1">
             Multi-turn contextual synthesis • Guardrails active • Direct to private vault
           </p>
         </div>
@@ -196,7 +201,7 @@ const ChatPage: React.FC = () => {
                     : 'bg-foreground/10 text-foreground'
                 )}
               >
-                {msg.role === 'user' ? <UserIcon className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                {msg.role === 'user' ? <UserIcon className="h-4 w-4" /> : <img src="/logo.png" alt="AI" className="h-4 w-4 object-contain drop-shadow-sm" />}
               </div>
 
               {/* Message Bubble */}
@@ -227,7 +232,7 @@ const ChatPage: React.FC = () => {
           {isLoading && (
             <div className="flex gap-3 mr-auto max-w-[80%] animate-pulse">
               <div className="h-8 w-8 rounded-xl bg-foreground/10 text-foreground flex items-center justify-center shrink-0">
-                <Bot className="h-4 w-4" />
+                <img src="/logo.png" alt="AI" className="h-4 w-4 object-contain drop-shadow-sm" />
               </div>
               <div className="bg-foreground/5 border border-foreground/10 rounded-2xl rounded-tl-xs p-4 flex items-center gap-2 text-muted-foreground text-xs">
                 <Loader2 className="h-4 w-4 animate-spin text-foreground" />
