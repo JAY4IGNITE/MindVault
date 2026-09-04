@@ -53,9 +53,9 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       <Link
         to={item.path}
         className={cn(
-          'flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 group',
+          'flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ease-out group',
           isActive
-            ? 'bg-foreground/10 text-foreground shadow-glow'
+            ? 'bg-foreground/10 text-foreground shadow-subtle'
             : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
         )}
         onClick={() => setIsMobileMenuOpen(false)}
@@ -108,7 +108,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           'lg:translate-x-0 lg:relative lg:p-4 lg:w-[320px]'
         )}
       >
-        <div className="flex-1 h-full flex flex-col bg-background/40 lg:bg-foreground/[0.02] backdrop-blur-2xl border-r lg:border border-foreground/10 lg:rounded-3xl shadow-2xl overflow-hidden">
+        <div className="flex-1 h-full flex flex-col bg-background/60 lg:bg-foreground/[0.02] backdrop-blur-2xl border border-foreground/[0.05] rounded-[24px] shadow-2xl overflow-hidden">
           <div className="p-6 hidden lg:flex items-center gap-4">
             <div className="h-10 w-10 rounded-2xl bg-foreground/10 flex items-center justify-center text-foreground border border-foreground/10 shadow-glow">
               <Brain className="h-6 w-6" />
@@ -132,22 +132,22 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
             </div>
           </div>
 
-          <div className="p-4 border-t border-foreground/10 bg-foreground/5">
-            <div className="flex items-center justify-between px-2 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-sm font-semibold border border-foreground/20 shadow-md">
+          <div className="p-5 border-t border-foreground/[0.04] bg-transparent">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-sm font-semibold border border-foreground/10 shadow-sm">
                   {userInitial}
                 </div>
-                <div className="flex flex-col max-w-[120px]">
+                <div className="flex flex-col min-w-0 flex-1 mr-2">
                   <span className="text-sm font-medium text-foreground truncate">{currentUser?.displayName || 'Vault User'}</span>
-                  <span className="text-xs text-muted-foreground truncate">{currentUser?.email}</span>
+                  <span className="text-[11px] text-muted-foreground truncate">{currentUser?.email}</span>
                 </div>
               </div>
               <ThemeToggle />
             </div>
             <Button
               variant="outline"
-              className="w-full justify-start gap-3 border-foreground/10 bg-foreground/5 hover:bg-destructive/20 hover:text-destructive hover:border-destructive/30 transition-colors"
+              className="w-full justify-start gap-3 rounded-full border-foreground/10 bg-foreground/[0.02] hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all duration-200 ease-out shadow-none"
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4" />

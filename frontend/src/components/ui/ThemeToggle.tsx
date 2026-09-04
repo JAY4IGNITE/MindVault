@@ -1,21 +1,38 @@
 import React from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "../../contexts/ThemeProvider"
-import { Button } from "./Button"
+import { cn } from "../../lib/utils"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const isDark = theme === "dark"
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground hover:text-foreground border-foreground/10"
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isDark}
+      className="relative flex items-center bg-foreground/5 border border-foreground/10 rounded-full p-1 cursor-pointer transition-colors hover:bg-foreground/10 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label="Toggle theme"
     >
-      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-      <span className="sr-only">Toggle theme</span>
-    </Button>
+      {/* Sliding Highlight */}
+      <div
+        className={cn(
+          "absolute left-1 top-1 bottom-1 w-[28px] rounded-full bg-background shadow-sm border border-foreground/5 transition-transform duration-300 ease-out",
+          isDark ? "translate-x-[28px]" : "translate-x-0"
+        )}
+      />
+      
+      {/* Light Icon */}
+      <div className="relative z-10 flex items-center justify-center w-7 h-6">
+        <Sun className={cn("h-3.5 w-3.5 transition-colors duration-300", isDark ? "text-muted-foreground" : "text-foreground")} />
+      </div>
+      
+      {/* Dark Icon */}
+      <div className="relative z-10 flex items-center justify-center w-7 h-6">
+        <Moon className={cn("h-3.5 w-3.5 transition-colors duration-300", isDark ? "text-foreground" : "text-muted-foreground")} />
+      </div>
+    </button>
   )
 }
