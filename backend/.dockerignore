@@ -1,0 +1,8 @@
+node_modules
+dist
+tests
+.env
+service-account*.json
+*.log
+npm-debug.log*
+.git
