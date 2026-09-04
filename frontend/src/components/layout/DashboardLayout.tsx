@@ -81,9 +81,9 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
       {/* Mobile Top Bar */}
       <div className="lg:hidden shrink-0 flex items-center justify-between p-4 border-b border-foreground/10 glass-panel sticky top-0 z-50">
-        <div className="flex items-center gap-[12px]">
-          <div className="shrink-0 flex items-center justify-center w-[36px] h-[36px] rounded-[12px] bg-foreground/[0.02] border border-foreground/[0.06] shadow-sm">
-            <img src="/logo.png" alt="MindVault AI Logo" className="w-[70%] h-[70%] object-contain" />
+        <div className="flex items-center gap-[12px] md:gap-[16px]">
+          <div className="shrink-0 flex items-center justify-center w-[40px] h-[40px] rounded-[14px] bg-foreground/[0.02] border border-foreground/[0.06] shadow-sm">
+            <img src="/logo.png" alt="MindVault AI Logo" className="w-[82%] h-[82%] object-contain" />
           </div>
           <span className="font-display font-bold text-lg text-foreground tracking-tight leading-none mt-0.5">MindVault AI</span>
         </div>
@@ -109,9 +109,9 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         )}
       >
         <div className="flex-1 h-full flex flex-col bg-background/60 lg:bg-foreground/[0.02] backdrop-blur-2xl border border-foreground/[0.05] rounded-[24px] shadow-2xl overflow-hidden">
-          <div className="p-6 hidden lg:flex items-center gap-[14px]">
-            <div className="shrink-0 flex items-center justify-center w-[44px] h-[44px] rounded-[14px] bg-foreground/[0.02] border border-foreground/[0.06] shadow-sm">
-              <img src="/logo.png" alt="MindVault AI Logo" className="w-[70%] h-[70%] object-contain" />
+          <div className="p-6 hidden lg:flex items-center gap-[14px] xl:gap-[16px]">
+            <div className="shrink-0 flex items-center justify-center w-[52px] h-[52px] rounded-[16px] bg-foreground/[0.02] border border-foreground/[0.06] shadow-sm">
+              <img src="/logo.png" alt="MindVault AI Logo" className="w-[82%] h-[82%] object-contain" />
             </div>
             <div className="flex flex-col justify-center mt-[2px]">
               <span className="font-display font-bold text-[20px] tracking-tight text-foreground leading-none">MindVault AI</span>
