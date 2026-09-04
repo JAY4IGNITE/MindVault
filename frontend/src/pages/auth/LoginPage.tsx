@@ -34,8 +34,8 @@ const LoginPage: React.FC = () => {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'demo@mindvault.ai',
-      password: 'password123',
+      email: '',
+      password: '',
     },
   });
 
