@@ -8,7 +8,7 @@ const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans selection:bg-accent/20">
       {/* Header */}
-      <header className="mt-5 md:mt-6 mx-auto w-[calc(100%-32px)] md:w-[calc(100%-64px)] max-w-7xl py-3 md:py-4 px-5 md:px-7 flex justify-between items-center bg-background/90 md:bg-foreground/[0.02] backdrop-blur-xl border border-foreground/[0.08] shadow-sm rounded-[24px] md:rounded-[30px] sticky top-5 md:top-6 z-50 transition-all">
+      <header className="mt-5 md:mt-6 mx-auto w-[calc(100%-32px)] md:w-[calc(100%-64px)] max-w-7xl py-3 md:py-4 px-6 md:px-8 flex justify-between items-center bg-background/90 md:bg-foreground/[0.02] backdrop-blur-xl border border-foreground/[0.08] shadow-sm rounded-[28px] md:rounded-[34px] lg:rounded-[40px] sticky top-5 md:top-6 z-50 transition-all">
         <div className="flex items-center gap-[14px] md:gap-[16px]">
           <div className="shrink-0 flex items-center justify-center w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[56px] md:h-[56px]">
             <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
