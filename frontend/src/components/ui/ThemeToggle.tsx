@@ -1,11 +1,29 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "../../contexts/ThemeProvider"
 import { cn } from "../../lib/utils"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const isDark = theme === "dark"
+  const [mounted, setMounted] = useState(false)
+  const [isSystemDark, setIsSystemDark] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+    setIsSystemDark(mediaQuery.matches)
+    
+    const handler = (e: MediaQueryListEvent) => setIsSystemDark(e.matches)
+    mediaQuery.addEventListener("change", handler)
+    return () => mediaQuery.removeEventListener("change", handler)
+  }, [])
+
+  // Avoid hydration mismatch and ensure we have correct system theme
+  if (!mounted) {
+    return <div className="w-[62px] h-[32px]" />
+  }
+
+  const isDark = theme === "dark" || (theme === "system" && isSystemDark)
 
   return (
     <button
@@ -36,3 +54,4 @@ export function ThemeToggle() {
     </button>
   )
 }
+
