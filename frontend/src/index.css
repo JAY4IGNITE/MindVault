@@ -3,11 +3,53 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-background text-primary font-sans antialiased;
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    
+    --radius: 1rem;
   }
+
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20;
+    /* Apple/visionOS inspired ambient glow */
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.08) 0%, transparent 40%);
+    background-attachment: fixed;
+  }
+  
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight text-primary-dark;
+    @apply font-display tracking-tight text-foreground font-semibold;
   }
 }
 
@@ -22,12 +64,13 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
+  @apply bg-white/20 rounded-full hover:bg-white/30 transition-colors;
 }
 
 /* Glassmorphic utilities */
 .glass {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  @apply bg-background/60 backdrop-blur-xl border-white/10 shadow-premium;
+}
+.glass-panel {
+  @apply bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl;
 }
