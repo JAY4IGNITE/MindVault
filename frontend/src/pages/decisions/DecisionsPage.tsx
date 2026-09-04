@@ -156,7 +156,7 @@ const DecisionsPage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        statusStyles[dec.status] || 'bg-slate-100 text-slate-700'
+                        statusStyles[dec.status] || 'bg-foreground/10 text-foreground'
                       }`}
                     >
                       {dec.status}
@@ -169,7 +169,7 @@ const DecisionsPage: React.FC = () => {
                     {dec.decision}
                   </CardTitle>
                 </div>
-                <Button variant="ghost" size="icon" className="shrink-0 text-slate-400 group-hover:text-accent">
+                <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground group-hover:text-foreground">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </CardHeader>
@@ -177,8 +177,8 @@ const DecisionsPage: React.FC = () => {
                 <p className="text-xs text-secondary line-clamp-2 leading-relaxed">{dec.reasoning}</p>
 
                 {dec.actualOutcome && (
-                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 text-xs text-slate-700 flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="p-2.5 rounded-lg bg-foreground/5 border border-foreground/10 text-xs text-foreground flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                     <span>
                       <strong className="font-semibold text-primary">Outcome:</strong> {dec.actualOutcome}
                     </span>
@@ -186,8 +186,8 @@ const DecisionsPage: React.FC = () => {
                 )}
 
                 {dec.reviewDate && (
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted pt-1">
-                    <Clock className="h-3 w-3 text-slate-400" />
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
+                    <Clock className="h-3 w-3 text-muted-foreground" />
                     <span>Target Retrospective: {dec.reviewDate}</span>
                   </div>
                 )}

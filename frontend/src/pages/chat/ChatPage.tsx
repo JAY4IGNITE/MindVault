@@ -169,7 +169,7 @@ const ChatPage: React.FC = () => {
             size="sm"
             onClick={handleClearChat}
             disabled={messages.length <= 1}
-            className="text-xs gap-1 text-slate-500 hover:text-error"
+            className="text-xs gap-1 text-muted-foreground hover:text-destructive"
           >
             <Trash2 className="h-3.5 w-3.5" /> Reset
           </Button>
@@ -177,7 +177,7 @@ const ChatPage: React.FC = () => {
       </div>
 
       {/* Messages Scroll Area */}
-      <Card className="flex-1 overflow-hidden flex flex-col bg-surface border-border shadow-subtle">
+      <Card className="flex-1 overflow-hidden flex flex-col bg-foreground/[0.02] border-foreground/10 shadow-subtle">
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
           {messages.map((msg) => (
             <div
@@ -192,8 +192,8 @@ const ChatPage: React.FC = () => {
                 className={cn(
                   'h-8 w-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-subtle',
                   msg.role === 'user'
-                    ? 'bg-primary text-white'
-                    : 'bg-gradient-to-br from-sky-100 to-sky-200 text-accent'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-foreground/10 text-foreground'
                 )}
               >
                 {msg.role === 'user' ? <UserIcon className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
@@ -204,8 +204,8 @@ const ChatPage: React.FC = () => {
                 className={cn(
                   'rounded-2xl p-4 text-sm leading-relaxed shadow-subtle',
                   msg.role === 'user'
-                    ? 'bg-primary text-white rounded-tr-xs'
-                    : 'bg-slate-50 border border-slate-200/80 text-primary-dark rounded-tl-xs'
+                    ? 'bg-primary text-primary-foreground rounded-tr-xs'
+                    : 'bg-foreground/5 border border-foreground/10 text-foreground rounded-tl-xs'
                 )}
               >
                 <div
@@ -214,8 +214,7 @@ const ChatPage: React.FC = () => {
                 />
                 <span
                   className={cn(
-                    'block text-[10px] mt-2 opacity-60 text-right',
-                    msg.role === 'user' ? 'text-slate-200' : 'text-slate-400'
+                    'block text-[10px] mt-2 opacity-60 text-right text-muted-foreground'
                   )}
                 >
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -227,11 +226,11 @@ const ChatPage: React.FC = () => {
           {/* Thinking indicator */}
           {isLoading && (
             <div className="flex gap-3 mr-auto max-w-[80%] animate-pulse">
-              <div className="h-8 w-8 rounded-xl bg-sky-100 text-accent flex items-center justify-center shrink-0">
+              <div className="h-8 w-8 rounded-xl bg-foreground/10 text-foreground flex items-center justify-center shrink-0">
                 <Bot className="h-4 w-4" />
               </div>
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl rounded-tl-xs p-4 flex items-center gap-2 text-secondary text-xs">
-                <Loader2 className="h-4 w-4 animate-spin text-accent" />
+              <div className="bg-foreground/5 border border-foreground/10 rounded-2xl rounded-tl-xs p-4 flex items-center gap-2 text-muted-foreground text-xs">
+                <Loader2 className="h-4 w-4 animate-spin text-foreground" />
                 <span>Reflecting and synthesizing context securely...</span>
               </div>
             </div>
@@ -241,7 +240,7 @@ const ChatPage: React.FC = () => {
         </div>
 
         {/* Input Bar */}
-        <div className="p-3 sm:p-4 bg-white border-t border-border">
+        <div className="p-3 sm:p-4 bg-foreground/[0.03] border-t border-foreground/10">
           <form onSubmit={handleSend} className="flex gap-2 relative">
             <Input
               ref={inputRef}

@@ -155,10 +155,10 @@ const DecisionDetailsPage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
             <div>
-              <span className="text-xs font-semibold text-secondary uppercase tracking-wider block mb-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Reasoning & Mental Model:
               </span>
-              <p className="text-xs sm:text-sm text-primary-dark leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+              <p className="text-xs sm:text-sm text-foreground leading-relaxed bg-foreground/5 p-3 rounded-xl border border-foreground/10">
                 {decision.reasoning}
               </p>
             </div>
@@ -205,18 +205,18 @@ const DecisionDetailsPage: React.FC = () => {
 
       {/* AI Retrospective Analysis Display */}
       {decision.aiRetrospective && (
-        <Card className="bg-gradient-to-br from-purple-50/40 to-surface border-purple-200/80 shadow-subtle animate-fade-in">
-          <CardHeader className="pb-3 border-b border-purple-100">
+        <Card className="bg-foreground/[0.02] border-purple-500/20 shadow-subtle animate-fade-in">
+          <CardHeader className="pb-3 border-b border-purple-500/10">
             <div className="flex items-center gap-2 text-purple-700">
               <Sparkles className="h-4 w-4" />
               <span className="text-xs font-bold uppercase tracking-wider">AI Retrospective Synthesis</span>
             </div>
-            <CardTitle className="text-lg font-bold text-primary-dark mt-1">
+            <CardTitle className="text-lg font-bold text-foreground mt-1">
               Cognitive Post-Mortem & Lessons Learned
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
-            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed italic bg-white p-4 rounded-xl border border-purple-100">
+            <p className="text-xs sm:text-sm text-foreground leading-relaxed italic bg-foreground/5 p-4 rounded-xl border border-purple-500/20">
               "{decision.aiRetrospective.retrospectiveSummary}"
             </p>
 
@@ -228,9 +228,9 @@ const DecisionDetailsPage: React.FC = () => {
                 {decision.aiRetrospective.keyTakeaways.map((takeaway, idx) => (
                   <li
                     key={idx}
-                    className="flex items-start gap-2.5 text-xs text-slate-700 bg-white/80 p-2.5 rounded-lg border border-purple-100"
+                    className="flex items-start gap-2.5 text-xs text-foreground bg-foreground/5 p-2.5 rounded-lg border border-purple-500/20"
                   >
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                     <span>{takeaway}</span>
                   </li>
                 ))}
