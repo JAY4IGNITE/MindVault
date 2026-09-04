@@ -1,5 +1,7 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/brain-circuit.svg" alt="MindVault Logo" width="120" height="120">
+  <a href="https://mindvault-39809.web.app">
+    <img src="./frontend/public/logo.png" alt="MindVault Logo" width="120" height="120">
+  </a>
   
   # MindVault AI
 
