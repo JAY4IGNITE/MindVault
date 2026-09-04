@@ -52,18 +52,18 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       <Link
         to={item.path}
         className={cn(
-          'flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150 group',
+          'flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 group',
           isActive
-            ? 'bg-primary text-white shadow-sm font-semibold'
-            : 'text-secondary hover:bg-slate-100 hover:text-primary'
+            ? 'bg-white/10 text-foreground shadow-glow'
+            : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
         )}
         onClick={() => setIsMobileMenuOpen(false)}
       >
-        <div className="flex items-center gap-3">
-          <item.icon className={cn('h-4 w-4 transition-transform group-hover:scale-105', isActive ? 'text-white' : 'text-slate-500')} />
+        <div className="flex items-center gap-3.5">
+          <item.icon className={cn('h-4 w-4 transition-transform group-hover:scale-110', isActive ? 'text-primary' : '')} />
           <span>{item.label}</span>
         </div>
-        {isActive && <ChevronRight className="h-4 w-4 opacity-70" />}
+        {isActive && <ChevronRight className="h-4 w-4 opacity-50" />}
       </Link>
     );
   };
@@ -71,89 +71,98 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const userInitial = (currentUser?.email || 'User').charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row relative">
+      {/* Background ambient glow effects mapped to Apple style */}
+      <div className="fixed inset-0 pointer-events-none opacity-50">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
+        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-purple-600/10 blur-[120px]" />
+      </div>
+
       {/* Mobile Top Bar */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b border-border bg-surface sticky top-0 z-30 shadow-subtle">
-        <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+      <div className="lg:hidden flex items-center justify-between p-4 border-b border-white/10 glass-panel sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center text-foreground border border-white/10">
             <Brain className="h-5 w-5" />
           </div>
-          <span className="font-display font-bold text-lg text-primary-dark">MindVault AI</span>
+          <span className="font-display font-semibold text-lg text-foreground tracking-tight">MindVault</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="hover:bg-white/10 text-foreground">
           {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside
-          className={cn(
-            'fixed inset-y-0 left-0 z-40 w-72 transform flex-col bg-surface border-r border-border transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0 flex shadow-sm',
-            isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-          )}
-        >
-          <div className="p-6 hidden lg:flex items-center gap-3 border-b border-border/50">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-subtle">
-              <Brain className="h-6 w-6" />
-            </div>
-            <div>
-              <span className="font-display font-bold text-lg text-primary-dark block leading-none">MindVault AI</span>
-              <span className="text-[11px] font-semibold text-accent uppercase tracking-wider">Private Second Brain</span>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto py-5 px-3.5 flex flex-col gap-6">
-            <nav className="flex flex-col gap-1">
-              <p className="px-3 text-[11px] font-bold text-muted uppercase tracking-wider mb-2">Vault Workspace</p>
-              {navItems.map((item) => (
-                <NavLink key={item.path} item={item} />
-              ))}
-            </nav>
-
-            <nav className="flex flex-col gap-1">
-              <p className="px-3 text-[11px] font-bold text-muted uppercase tracking-wider mb-2">Privacy & Protocol</p>
-              {secondaryNavItems.map((item) => (
-                <NavLink key={item.path} item={item} />
-              ))}
-            </nav>
-          </div>
-
-          {/* User footer */}
-          <div className="p-4 border-t border-border bg-slate-50/50">
-            <div className="flex items-center gap-3 mb-3 px-1">
-              <div className="h-9 w-9 rounded-xl bg-accent text-white flex items-center justify-center text-sm font-bold shadow-subtle">
-                {userInitial}
-              </div>
-              <div className="overflow-hidden flex-1">
-                <p className="text-xs font-semibold text-primary truncate leading-tight">{currentUser?.email}</p>
-                <span className="text-[10px] text-muted flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-success"></span>
-                  Encrypted Session
-                </span>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" className="w-full justify-center gap-2 text-xs font-medium" onClick={handleSignOut}>
-              <LogOut className="h-3.5 w-3.5" /> Sign Out
-            </Button>
-          </div>
-        </aside>
-
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8 animate-fade-in">
-          <div className="mx-auto max-w-6xl h-full">
-            {children}
-          </div>
-        </main>
-      </div>
-
-      {/* Mobile Drawer Overlay */}
+      {/* Sidebar Overlay for Mobile */}
       {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-slate-900/30 backdrop-blur-sm lg:hidden animate-fade-in"
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
+
+      {/* Sidebar - Floating Glass Pane on Desktop */}
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 w-72 transform flex-col transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex',
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
+          'lg:translate-x-0 lg:relative lg:p-4 lg:w-[320px]'
+        )}
+      >
+        <div className="flex-1 h-full flex flex-col bg-background/40 lg:bg-white/5 backdrop-blur-2xl border-r lg:border border-white/10 lg:rounded-3xl shadow-2xl overflow-hidden">
+          <div className="p-6 hidden lg:flex items-center gap-4">
+            <div className="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center text-foreground border border-white/10 shadow-glow">
+              <Brain className="h-6 w-6" />
+            </div>
+            <div>
+              <span className="block font-display font-semibold text-lg text-foreground tracking-tight leading-tight">MindVault</span>
+              <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground mt-0.5">Secure AI Vault</span>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1 scrollbar-hide">
+            {navItems.map((item) => (
+              <NavLink key={item.path} item={item} />
+            ))}
+
+            <div className="mt-8 mb-4">
+              <div className="px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-2">System Controls</div>
+              {secondaryNavItems.map((item) => (
+                <NavLink key={item.path} item={item} />
+              ))}
+            </div>
+          </div>
+
+          <div className="p-4 border-t border-white/10 bg-black/20">
+            <div className="flex items-center justify-between px-2 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-sm font-semibold border border-white/20 shadow-md">
+                  {userInitial}
+                </div>
+                <div className="flex flex-col max-w-[120px]">
+                  <span className="text-sm font-medium text-foreground truncate">{currentUser?.displayName || 'Vault User'}</span>
+                  <span className="text-xs text-muted-foreground truncate">{currentUser?.email}</span>
+                </div>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 border-white/10 bg-white/5 hover:bg-destructive/20 hover:text-destructive hover:border-destructive/30 transition-colors"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4" />
+              Lock Vault
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 lg:pl-2">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:py-10">
+          <div className="mx-auto max-w-6xl">
+            {children}
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
