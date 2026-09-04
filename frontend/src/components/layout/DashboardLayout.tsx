@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   LayoutDashboard,
@@ -14,12 +15,18 @@ import {
   LogOut,
   Menu,
   X,
-  Brain,
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/Button';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import {
+  sidebarContainer,
+  sidebarItem,
+  drawerVariants,
+  overlayVariants,
+  transitions,
+} from '../../lib/motion';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -50,22 +57,24 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const NavLink = ({ item }: { item: typeof navItems[0] }) => {
     const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
     return (
-      <Link
-        to={item.path}
-        className={cn(
-          'flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ease-out group',
-          isActive
-            ? 'bg-foreground/10 text-foreground shadow-subtle'
-            : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
-        )}
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        <div className="flex items-center gap-3.5">
-          <item.icon className={cn('h-4 w-4 transition-transform group-hover:scale-110', isActive ? 'text-foreground' : '')} />
-          <span>{item.label}</span>
-        </div>
-        {isActive && <ChevronRight className="h-4 w-4 opacity-50" />}
-      </Link>
+      <motion.div variants={sidebarItem}>
+        <Link
+          to={item.path}
+          className={cn(
+            'flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 ease-out group',
+            isActive
+              ? 'bg-foreground/10 text-foreground shadow-subtle'
+              : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
+          )}
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div className="flex items-center gap-3.5">
+            <item.icon className={cn('h-4 w-4 transition-transform group-hover:scale-110', isActive ? 'text-foreground' : '')} />
+            <span>{item.label}</span>
+          </div>
+          {isActive && <ChevronRight className="h-4 w-4 opacity-50" />}
+        </Link>
+      </motion.div>
     );
   };
 
@@ -73,7 +82,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
   return (
     <div className="h-[100dvh] w-full overflow-hidden bg-background flex flex-col lg:flex-row relative">
-      {/* Background ambient glow effects mapped to Apple style */}
+      {/* Background ambient glow */}
       <div className="fixed inset-0 pointer-events-none opacity-50">
         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
         <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-purple-600/10 blur-[120px]" />
@@ -88,74 +97,74 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           <span className="font-display font-bold text-lg text-foreground tracking-tight leading-none mt-0.5">MindVault AI</span>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="hover:bg-foreground/10 text-foreground">
-          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <AnimatePresence mode="wait" initial={false}>
+            {isMobileMenuOpen ? (
+              <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={transitions.micro}>
+                <X className="h-5 w-5" />
+              </motion.div>
+            ) : (
+              <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={transitions.micro}>
+                <Menu className="h-5 w-5" />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Button>
       </div>
 
-      {/* Sidebar Overlay for Mobile */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Sidebar - Floating Glass Pane on Desktop */}
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-50 w-72 transform flex-col transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex',
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
-          'lg:translate-x-0 lg:relative lg:p-4 lg:w-[320px]'
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            key="overlay"
+            variants={overlayVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={transitions.fast}
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
         )}
-      >
-        <div className="flex-1 h-full flex flex-col bg-background/60 lg:bg-foreground/[0.02] backdrop-blur-2xl border border-foreground/[0.05] rounded-[24px] shadow-2xl overflow-hidden">
-          <div className="p-6 hidden lg:flex items-center gap-[14px] xl:gap-[16px]">
-            <div className="shrink-0 flex items-center justify-center w-[52px] h-[52px]">
-              <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
-            </div>
-            <div className="flex flex-col justify-center mt-[2px]">
-              <span className="font-display font-bold text-[20px] tracking-tight text-foreground leading-none">MindVault AI</span>
-              <span className="text-[10px] uppercase font-medium text-muted-foreground tracking-[0.1em] mt-1 leading-none">Zero-Trust AI Brain</span>
-            </div>
-          </div>
+      </AnimatePresence>
 
-          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1 scrollbar-hide">
-            {navItems.map((item) => (
-              <NavLink key={item.path} item={item} />
-            ))}
-
-            <div className="mt-8 mb-4">
-              <div className="px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-2">System Controls</div>
-              {secondaryNavItems.map((item) => (
-                <NavLink key={item.path} item={item} />
-              ))}
-            </div>
-          </div>
-
-          <div className="p-5 border-t border-foreground/[0.04] bg-transparent">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-3 overflow-hidden">
-                <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-sm font-semibold border border-foreground/10 shadow-sm">
-                  {userInitial}
-                </div>
-                <div className="flex flex-col min-w-0 flex-1 mr-2">
-                  <span className="text-sm font-medium text-foreground truncate">{currentUser?.displayName || 'Vault User'}</span>
-                  <span className="text-[11px] text-muted-foreground truncate">{currentUser?.email}</span>
-                </div>
-              </div>
-              <ThemeToggle />
-            </div>
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3 rounded-full border-foreground/10 bg-foreground/[0.02] hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all duration-200 ease-out shadow-none"
-              onClick={handleSignOut}
+      {/* Sidebar */}
+      <>
+        {/* Mobile: AnimatePresence drawer */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.aside
+              key="mobile-sidebar"
+              variants={drawerVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed inset-y-0 left-0 z-50 w-72 flex flex-col lg:hidden"
             >
-              <LogOut className="h-4 w-4" />
-              Lock Vault
-            </Button>
-          </div>
-        </div>
-      </aside>
+              <SidebarContent
+                navItems={navItems}
+                secondaryNavItems={secondaryNavItems}
+                NavLink={NavLink}
+                userInitial={userInitial}
+                currentUser={currentUser}
+                handleSignOut={handleSignOut}
+              />
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* Desktop: always visible */}
+        <aside className="hidden lg:flex lg:relative lg:p-4 lg:w-[320px] shrink-0">
+          <SidebarContent
+            navItems={navItems}
+            secondaryNavItems={secondaryNavItems}
+            NavLink={NavLink}
+            userInitial={userInitial}
+            currentUser={currentUser}
+            handleSignOut={handleSignOut}
+          />
+        </aside>
+      </>
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
@@ -168,3 +177,68 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     </div>
   );
 };
+
+// Extracted sidebar content so it works for both mobile drawer and desktop
+interface SidebarContentProps {
+  navItems: { icon: React.ElementType; label: string; path: string }[];
+  secondaryNavItems: { icon: React.ElementType; label: string; path: string }[];
+  NavLink: React.FC<{ item: { icon: React.ElementType; label: string; path: string } }>;
+  userInitial: string;
+  currentUser: any;
+  handleSignOut: () => void;
+}
+
+const SidebarContent: React.FC<SidebarContentProps> = ({ navItems, secondaryNavItems, NavLink, userInitial, currentUser, handleSignOut }) => (
+  <div className="flex-1 h-full flex flex-col bg-background/60 lg:bg-foreground/[0.02] backdrop-blur-2xl border border-foreground/[0.05] rounded-[24px] shadow-2xl overflow-hidden">
+    <div className="p-6 hidden lg:flex items-center gap-[14px] xl:gap-[16px]">
+      <div className="shrink-0 flex items-center justify-center w-[52px] h-[52px]">
+        <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
+      </div>
+      <div className="flex flex-col justify-center mt-[2px]">
+        <span className="font-display font-bold text-[20px] tracking-tight text-foreground leading-none">MindVault AI</span>
+        <span className="text-[10px] uppercase font-medium text-muted-foreground tracking-[0.1em] mt-1 leading-none">Zero-Trust AI Brain</span>
+      </div>
+    </div>
+
+    <motion.div
+      className="flex-1 overflow-y-auto px-4 py-6 space-y-1 scrollbar-hide"
+      variants={sidebarContainer}
+      initial="initial"
+      animate="animate"
+    >
+      {navItems.map((item: any) => (
+        <NavLink key={item.path} item={item} />
+      ))}
+
+      <div className="mt-8 mb-4">
+        <div className="px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-2">System Controls</div>
+        {secondaryNavItems.map((item: any) => (
+          <NavLink key={item.path} item={item} />
+        ))}
+      </div>
+    </motion.div>
+
+    <div className="p-5 border-t border-foreground/[0.04] bg-transparent">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-sm font-semibold border border-foreground/10 shadow-sm">
+            {userInitial}
+          </div>
+          <div className="flex flex-col min-w-0 flex-1 mr-2">
+            <span className="text-sm font-medium text-foreground truncate">{currentUser?.displayName || 'Vault User'}</span>
+            <span className="text-[11px] text-muted-foreground truncate">{currentUser?.email}</span>
+          </div>
+        </div>
+        <ThemeToggle />
+      </div>
+      <Button
+        variant="outline"
+        className="w-full justify-start gap-3 rounded-full border-foreground/10 bg-foreground/[0.02] hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all duration-200 ease-out shadow-none"
+        onClick={handleSignOut}
+      >
+        <LogOut className="h-4 w-4" />
+        Lock Vault
+      </Button>
+    </div>
+  </div>
+);

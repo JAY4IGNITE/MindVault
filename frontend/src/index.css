@@ -104,7 +104,42 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-black/10 dark:bg-white/20 rounded-full hover:bg-black/20 dark:hover:bg-white/30 transition-colors;
+  @apply bg-foreground/20 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-foreground/40;
+}
+
+/* Atmospheric Background Animations */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-float-1 {
+    animation: float-1 20s ease-in-out infinite alternate;
+  }
+  .animate-float-2 {
+    animation: float-2 24s ease-in-out infinite alternate-reverse;
+  }
+  .animate-float-3 {
+    animation: float-3 28s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes float-1 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(5%, 8%, 0) scale(1.03); }
+  100% { transform: translate3d(-5%, 4%, 0) scale(0.97); }
+}
+
+@keyframes float-2 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-8%, -5%, 0) scale(1.04); }
+  100% { transform: translate3d(5%, -8%, 0) scale(0.96); }
+}
+
+@keyframes float-3 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(8%, -8%, 0) scale(1.03); }
+  100% { transform: translate3d(-8%, 8%, 0) scale(0.97); }
 }
 
 /* Glassmorphic utilities */

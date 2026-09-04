@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'motion/react';
 import { AuthProvider } from './contexts/AuthContext';
 import { AuthGuard } from './components/layout/AuthGuard';
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -44,6 +45,44 @@ const PageLoader: React.FC = () => (
   </div>
 );
 
+const AnimatedRoutes: React.FC = () => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <Routes location={location} key={location.pathname}>
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+        {/* Protected Routes (AuthGuard) */}
+        <Route element={<AuthGuard />}>
+          <Route
+            element={
+              <DashboardLayout>
+                <Outlet />
+              </DashboardLayout>
+            }
+          >
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/journal" element={<JournalPage />} />
+            <Route path="/memories" element={<JournalPage />} />
+            <Route path="/goals" element={<DashboardPage />} />
+            <Route path="/decisions" element={<DecisionsPage />} />
+            <Route path="/decisions/:id" element={<DecisionDetailsPage />} />
+            <Route path="/insights" element={<InsightsPage />} />
+            <Route path="/memory-graph" element={<MemoryGraphPage />} />
+            <Route path="/security" element={<SecurityPage />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Route>
+        </Route>
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <ThemeProvider defaultTheme="dark">
@@ -51,36 +90,7 @@ const App: React.FC = () => {
       <AuthProvider>
         <Router>
           <Suspense fallback={<PageLoader />}>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/verify-email" element={<VerifyEmailPage />} />
-
-              {/* Protected Routes (AuthGuard) */}
-              <Route element={<AuthGuard />}>
-                <Route
-                  element={
-                    <DashboardLayout>
-                      <Outlet />
-                    </DashboardLayout>
-                  }
-                >
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/chat" element={<ChatPage />} />
-                  <Route path="/journal" element={<JournalPage />} />
-                  <Route path="/memories" element={<JournalPage />} />
-                  <Route path="/goals" element={<DashboardPage />} />
-                  <Route path="/decisions" element={<DecisionsPage />} />
-                  <Route path="/decisions/:id" element={<DecisionDetailsPage />} />
-                  <Route path="/insights" element={<InsightsPage />} />
-                  <Route path="/memory-graph" element={<MemoryGraphPage />} />
-                  <Route path="/security" element={<SecurityPage />} />
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Route>
-              </Route>
-            </Routes>
+            <AnimatedRoutes />
           </Suspense>
         </Router>
       </AuthProvider>

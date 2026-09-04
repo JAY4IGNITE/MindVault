@@ -1,10 +1,11 @@
 import * as React from 'react';
+import { motion } from 'motion/react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -41,15 +42,18 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, isLoading, children, ...props }, ref) => {
     return (
-      <button
+      <motion.button
         className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
+        ref={ref as any}
         disabled={isLoading || props.disabled}
-        {...props}
+        whileHover={{ scale: props.disabled || isLoading ? 1 : 1.02 }}
+        whileTap={{ scale: props.disabled || isLoading ? 1 : 0.97 }}
+        transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+        {...(props as any)}
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {children}
-      </button>
+      </motion.button>
     );
   }
 );
