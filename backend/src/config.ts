@@ -23,4 +23,5 @@ export const config = {
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   serviceAccountPath: path.resolve(__dirname, '../service-account.json'),
   corsOrigin: parseCorsOrigin(),
+  redisUrl: process.env.REDIS_URL || '',
 };

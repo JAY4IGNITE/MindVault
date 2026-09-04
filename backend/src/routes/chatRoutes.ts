@@ -6,6 +6,7 @@ import * as geminiService from '../services/gemini';
 import { FieldValue } from 'firebase-admin/firestore';
 import { Content } from '@google/generative-ai';
 import { logger } from '../utils/logger';
+import { redisService } from '../services/redisService';
 
 const chatMessageSchema = z.object({
   message: z.string().min(1).max(4000),
@@ -42,18 +43,50 @@ export async function chatRoutes(fastify: FastifyInstance) {
       let conversationRef;
 
       try {
+        let history: Content[] | null = null;
+        const cacheKey = conversationId ? `chat:${uid}:${conversationId}:history` : null;
+
         if (conversationId) {
           conversationRef = userDocRef.collection('conversations').doc(conversationId);
-          const convDoc = await conversationRef.get();
-          if (!convDoc.exists) {
-            return reply.code(404).send({
-              error: 'Not Found',
-              message: 'Conversation not found.',
-            });
+
+          // Fast path: Load conversation history from Redis cache (<5ms)
+          if (cacheKey) {
+            history = await redisService.get<Content[]>(cacheKey);
+          }
+
+          if (!history) {
+            const convDoc = await conversationRef.get();
+            if (!convDoc.exists) {
+              return reply.code(404).send({
+                error: 'Not Found',
+                message: 'Conversation not found.',
+              });
+            }
+
+            const messagesSnapshot = await conversationRef
+              .collection('messages')
+              .orderBy('timestamp', 'desc')
+              .limit(20)
+              .get();
+
+            history = messagesSnapshot.docs
+              .reverse()
+              .map((doc) => {
+                const data = doc.data();
+                return {
+                  role: data.role === 'model' ? 'model' : 'user',
+                  parts: [{ text: data.content }],
+                };
+              });
+
+            if (cacheKey) {
+              await redisService.set(cacheKey, history, 3600);
+            }
           }
         } else {
           conversationRef = userDocRef.collection('conversations').doc();
           conversationId = conversationRef.id;
+          history = [];
           await conversationRef.set({
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
@@ -61,27 +94,22 @@ export async function chatRoutes(fastify: FastifyInstance) {
           });
         }
 
-        const messagesSnapshot = await conversationRef
-          .collection('messages')
-          .orderBy('timestamp', 'desc')
-          .limit(20)
-          .get();
-
-        const history: Content[] = messagesSnapshot.docs
-          .reverse()
-          .map((doc) => {
-            const data = doc.data();
-            return {
-              role: data.role === 'model' ? 'model' : 'user',
-              parts: [{ text: data.content }],
-            };
-          });
-
         const modelResponseContent = await geminiService.generateChatResponse(
-          history,
+          history || [],
           userMessageContent
         );
 
+        // Update Redis cache with the latest turn to accelerate follow-up messages
+        const updatedHistory: Content[] = [
+          ...(history || []),
+          { role: 'user', parts: [{ text: userMessageContent }] },
+          { role: 'model', parts: [{ text: modelResponseContent }] },
+        ].slice(-20);
+
+        const updatedCacheKey = `chat:${uid}:${conversationId}:history`;
+        await redisService.set(updatedCacheKey, updatedHistory, 3600);
+
+        // Persist to Firestore in batch
         const batch = db.batch();
         const messagesRef = conversationRef.collection('messages');
 
