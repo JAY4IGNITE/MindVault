@@ -61,7 +61,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         onClick={() => setIsMobileMenuOpen(false)}
       >
         <div className="flex items-center gap-3.5">
-          <item.icon className={cn('h-4 w-4 transition-transform group-hover:scale-110', isActive ? 'text-primary' : '')} />
+          <item.icon className={cn('h-4 w-4 transition-transform group-hover:scale-110', isActive ? 'text-foreground' : '')} />
           <span>{item.label}</span>
         </div>
         {isActive && <ChevronRight className="h-4 w-4 opacity-50" />}
@@ -72,7 +72,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const userInitial = (currentUser?.email || 'User').charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row relative">
+    <div className="h-[100dvh] w-full overflow-hidden bg-background flex flex-col lg:flex-row relative">
       {/* Background ambient glow effects mapped to Apple style */}
       <div className="fixed inset-0 pointer-events-none opacity-50">
         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
@@ -80,7 +80,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       </div>
 
       {/* Mobile Top Bar */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b border-foreground/10 glass-panel sticky top-0 z-50">
+      <div className="lg:hidden shrink-0 flex items-center justify-between p-4 border-b border-foreground/10 glass-panel sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-xl bg-foreground/10 flex items-center justify-center text-foreground border border-foreground/10">
             <Brain className="h-5 w-5" />
