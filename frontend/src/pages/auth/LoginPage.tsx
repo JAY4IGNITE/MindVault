@@ -88,8 +88,8 @@ const LoginPage: React.FC = () => {
 
       <div className="w-full max-w-[420px] relative z-10 animate-slide-up">
         <div className="flex flex-col items-center space-y-4 text-center mb-8">
-          <div className="h-16 w-16 bg-foreground/10 rounded-2xl flex items-center justify-center shadow-glow border border-foreground/10 overflow-hidden p-2.5">
-            <img src="/logo.png" alt="MindVault AI Logo" className="h-full w-full object-contain drop-shadow-md" />
+          <div className="h-20 w-20 flex items-center justify-center">
+            <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-3xl font-display font-bold text-foreground">Welcome to MindVault</h1>

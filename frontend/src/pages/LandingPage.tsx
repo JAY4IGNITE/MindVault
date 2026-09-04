@@ -10,8 +10,8 @@ const LandingPage: React.FC = () => {
       {/* Header */}
       <header className="py-5 px-6 md:px-10 lg:px-12 flex justify-between items-center w-full border-b border-foreground/10 bg-background/80 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center gap-[14px] md:gap-[16px]">
-          <div className="shrink-0 flex items-center justify-center w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[56px] md:h-[56px] rounded-[14px] md:rounded-[16px] bg-foreground/[0.02] border border-foreground/[0.06] shadow-sm">
-            <img src="/logo.png" alt="MindVault AI Logo" className="w-[82%] h-[82%] object-contain" />
+          <div className="shrink-0 flex items-center justify-center w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[56px] md:h-[56px]">
+            <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
           </div>
           <div className="flex flex-col justify-center mt-[2px]">
             <span className="font-display font-bold text-xl md:text-[22px] tracking-tight text-foreground leading-none">MindVault AI</span>
