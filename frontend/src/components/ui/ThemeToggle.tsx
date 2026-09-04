@@ -26,12 +26,12 @@ export function ThemeToggle() {
       
       {/* Light Icon */}
       <div className="relative z-10 flex items-center justify-center w-7 h-6">
-        <Sun className={cn("h-3.5 w-3.5 transition-colors duration-300", isDark ? "text-muted-foreground" : "text-foreground")} />
+        <Sun className={cn("w-4 h-4 shrink-0 transition-colors duration-300", isDark ? "text-muted-foreground" : "text-foreground")} />
       </div>
       
       {/* Dark Icon */}
       <div className="relative z-10 flex items-center justify-center w-7 h-6">
-        <Moon className={cn("h-3.5 w-3.5 transition-colors duration-300", isDark ? "text-foreground" : "text-muted-foreground")} />
+        <Moon className={cn("w-4 h-4 shrink-0 transition-colors duration-300", isDark ? "text-foreground" : "text-muted-foreground")} />
       </div>
     </button>
   )

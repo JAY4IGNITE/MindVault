@@ -14,9 +14,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const currentType = isPassword ? (showPassword ? 'text' : 'password') : type;
 
     return (
-      <div className="w-full space-y-2">
+      <div className="w-full space-y-1 sm:space-y-1.5">
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-foreground">
+          <label htmlFor={id} className="block text-xs sm:text-[13px] font-medium text-foreground">
             {label}
           </label>
         )}
@@ -25,7 +25,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             id={id}
             type={currentType}
             className={cn(
-              'flex h-11 w-full rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50',
+              'flex h-10 w-full rounded-xl border border-foreground/10 bg-foreground/5 px-3.5 py-1.5 text-sm text-foreground shadow-sm placeholder:text-muted-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50',
               isPassword && 'pr-12',
               error && 'border-destructive focus-visible:ring-destructive',
               className
@@ -40,7 +40,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               onClick={() => setShowPassword(!showPassword)}
               tabIndex={-1}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? <EyeOff className="w-[18px] h-[18px] shrink-0" /> : <Eye className="w-[18px] h-[18px] shrink-0" />}
             </button>
           )}
         </div>

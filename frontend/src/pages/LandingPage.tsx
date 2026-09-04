@@ -50,16 +50,16 @@ const LandingPage: React.FC = () => {
           <div className="mr-[24px] md:mr-[32px]">
             <ThemeToggle />
           </div>
-          <div className="flex items-center gap-[24px] md:gap-[32px]">
-            <Link to="/login">
-              <Button variant="ghost" size="sm" className="hover:bg-foreground/5">Sign In</Button>
+          <div className="flex items-center gap-[12px] sm:gap-[16px]">
+            <Link to="/login" className="inline-flex items-center">
+              <Button variant="ghost" size="sm" className="h-9 hover:bg-foreground/5 text-foreground font-medium">
+                Sign In
+              </Button>
             </Link>
-            <Link to="/signup">
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.15 }}>
-                <Button variant="default" size="sm" className="gap-1.5 shadow-sm">
-                  Open Vault <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </motion.div>
+            <Link to="/signup" className="inline-flex items-center">
+              <Button variant="default" size="sm" className="h-9 gap-1.5 shadow-sm font-medium">
+                Open Vault <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
             </Link>
           </div>
         </div>

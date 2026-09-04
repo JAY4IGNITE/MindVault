@@ -149,3 +149,26 @@ body {
 .glass-panel {
   @apply bg-black/5 dark:bg-white/5 backdrop-blur-2xl border border-black/5 dark:border-white/10 shadow-2xl;
 }
+
+/* Google Auth Button & Icon explicit constraints */
+.google-auth-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+}
+
+.google-auth-button .google-icon,
+.google-icon {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  flex: 0 0 20px !important;
+  flex-shrink: 0 !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+

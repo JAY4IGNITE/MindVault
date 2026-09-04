@@ -61,15 +61,15 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         <Link
           to={item.path}
           className={cn(
-            'flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 ease-out group',
+            'flex items-center justify-between rounded-[14px] px-3.5 py-3 text-[15px] font-medium transition-all duration-200 ease-out group',
             isActive
-              ? 'bg-foreground/10 text-foreground shadow-subtle'
+              ? 'bg-foreground/10 text-foreground font-semibold shadow-sm'
               : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
           )}
           onClick={() => setIsMobileMenuOpen(false)}
         >
-          <div className="flex items-center gap-3.5">
-            <item.icon className={cn('h-4 w-4 transition-transform group-hover:scale-110', isActive ? 'text-foreground' : '')} />
+          <div className="flex items-center gap-3">
+            <item.icon className={cn('h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:translate-x-0.5', isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground')} />
             <span>{item.label}</span>
           </div>
           {isActive && <ChevronRight className="h-4 w-4 opacity-50" />}
@@ -154,7 +154,12 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         </AnimatePresence>
 
         {/* Desktop: always visible */}
-        <aside className="hidden lg:flex lg:relative lg:p-4 lg:w-[320px] shrink-0">
+        <motion.aside
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="hidden lg:flex lg:relative lg:p-4 lg:w-[320px] shrink-0"
+        >
           <SidebarContent
             navItems={navItems}
             secondaryNavItems={secondaryNavItems}
@@ -163,26 +168,31 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
             currentUser={currentUser}
             handleSignOut={handleSignOut}
           />
-        </aside>
+        </motion.aside>
       </>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-8">
-          <div className="mx-auto max-w-6xl">
+      <motion.main
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10"
+      >
+        <div className={cn("flex-1 p-3 sm:p-5 md:p-6 lg:p-6 flex flex-col min-h-0", location.pathname === '/chat' ? "overflow-hidden" : "overflow-y-auto")}>
+          <div className={cn("mx-auto w-full flex-1 flex flex-col min-h-0", location.pathname === '/chat' ? "max-w-5xl h-full" : "max-w-6xl")}>
             {children}
           </div>
         </div>
-      </main>
+      </motion.main>
     </div>
   );
 };
 
 // Extracted sidebar content so it works for both mobile drawer and desktop
 interface SidebarContentProps {
-  navItems: { icon: React.ElementType; label: string; path: string }[];
-  secondaryNavItems: { icon: React.ElementType; label: string; path: string }[];
-  NavLink: React.FC<{ item: { icon: React.ElementType; label: string; path: string } }>;
+  navItems: any[];
+  secondaryNavItems: any[];
+  NavLink: React.ComponentType<{ item: any }>;
   userInitial: string;
   currentUser: any;
   handleSignOut: () => void;
@@ -190,12 +200,12 @@ interface SidebarContentProps {
 
 const SidebarContent: React.FC<SidebarContentProps> = ({ navItems, secondaryNavItems, NavLink, userInitial, currentUser, handleSignOut }) => (
   <div className="flex-1 h-full flex flex-col bg-background/60 lg:bg-foreground/[0.02] backdrop-blur-2xl border border-foreground/[0.05] rounded-[24px] shadow-2xl overflow-hidden">
-    <div className="p-6 hidden lg:flex items-center gap-[14px] xl:gap-[16px]">
-      <div className="shrink-0 flex items-center justify-center w-[52px] h-[52px]">
+    <div className="p-6 hidden lg:flex items-center gap-[14px]">
+      <div className="shrink-0 flex items-center justify-center w-[40px] h-[40px]">
         <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
       </div>
-      <div className="flex flex-col justify-center mt-[2px]">
-        <span className="font-display font-bold text-[20px] tracking-tight text-foreground leading-none">MindVault AI</span>
+      <div className="flex flex-col justify-center mt-[1px]">
+        <span className="font-display font-bold text-[19px] tracking-tight text-foreground leading-none">MindVault AI</span>
         <span className="text-[10px] uppercase font-medium text-muted-foreground tracking-[0.1em] mt-1 leading-none">Zero-Trust AI Brain</span>
       </div>
     </div>
@@ -233,11 +243,11 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ navItems, secondaryNavI
       </div>
       <Button
         variant="outline"
-        className="w-full justify-start gap-3 rounded-full border-foreground/10 bg-foreground/[0.02] hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all duration-200 ease-out shadow-none"
+        className="w-full justify-start gap-2.5 h-10 rounded-xl border-foreground/10 bg-foreground/[0.03] hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-foreground font-medium text-xs sm:text-[13px] transition-all duration-200 ease-out shadow-none"
         onClick={handleSignOut}
       >
-        <LogOut className="h-4 w-4" />
-        Lock Vault
+        <LogOut className="h-4 w-4 text-muted-foreground group-hover:text-destructive" />
+        <span>Lock Vault</span>
       </Button>
     </div>
   </div>
