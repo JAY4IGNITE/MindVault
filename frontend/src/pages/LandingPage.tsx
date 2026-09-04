@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
+import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { Brain, Shield, Sparkles, Lock, ArrowRight, Network, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
@@ -9,8 +10,8 @@ const LandingPage: React.FC = () => {
       {/* Header */}
       <header className="py-5 px-6 md:px-12 flex justify-between items-center max-w-7xl mx-auto w-full border-b border-foreground/10 bg-background/80 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-foreground/10 text-foreground flex items-center justify-center shadow-subtle">
-            <Brain className="h-6 w-6" />
+          <div className="h-10 w-10 rounded-xl bg-foreground/10 text-foreground flex items-center justify-center shadow-subtle p-1.5 overflow-hidden">
+            <img src="/logo.png" alt="MindVault AI Logo" className="h-full w-full object-contain drop-shadow-sm" />
           </div>
           <div>
             <span className="font-display font-bold text-xl tracking-tight text-foreground block leading-none">MindVault AI</span>
@@ -18,6 +19,7 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Link to="/login">
             <Button variant="ghost" size="sm">Sign In</Button>
           </Link>

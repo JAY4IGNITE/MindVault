@@ -82,8 +82,8 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       {/* Mobile Top Bar */}
       <div className="lg:hidden shrink-0 flex items-center justify-between p-4 border-b border-foreground/10 glass-panel sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-foreground/10 flex items-center justify-center text-foreground border border-foreground/10">
-            <Brain className="h-5 w-5" />
+          <div className="h-9 w-9 rounded-xl bg-foreground/10 flex items-center justify-center text-foreground border border-foreground/10 overflow-hidden p-1.5">
+            <img src="/logo.png" alt="MindVault AI" className="h-full w-full object-contain drop-shadow-sm" />
           </div>
           <span className="font-display font-semibold text-lg text-foreground tracking-tight">MindVault</span>
         </div>
@@ -110,8 +110,8 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       >
         <div className="flex-1 h-full flex flex-col bg-background/60 lg:bg-foreground/[0.02] backdrop-blur-2xl border border-foreground/[0.05] rounded-[24px] shadow-2xl overflow-hidden">
           <div className="p-6 hidden lg:flex items-center gap-4">
-            <div className="h-10 w-10 rounded-2xl bg-foreground/10 flex items-center justify-center text-foreground border border-foreground/10 shadow-glow">
-              <Brain className="h-6 w-6" />
+            <div className="h-10 w-10 rounded-2xl bg-foreground/10 flex items-center justify-center text-foreground border border-foreground/10 shadow-glow overflow-hidden p-1.5">
+              <img src="/logo.png" alt="MindVault AI" className="h-full w-full object-contain drop-shadow-sm" />
             </div>
             <div>
               <span className="block font-display font-semibold text-lg text-foreground tracking-tight leading-tight">MindVault</span>
