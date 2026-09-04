@@ -8,7 +8,7 @@ const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans selection:bg-accent/20">
       {/* Header */}
-      <header className="py-5 px-6 md:px-12 flex justify-between items-center max-w-7xl mx-auto w-full border-b border-foreground/10 bg-background/80 backdrop-blur-md sticky top-0 z-20">
+      <header className="py-5 px-6 md:px-10 lg:px-12 flex justify-between items-center w-full border-b border-foreground/10 bg-background/80 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center gap-[14px] md:gap-[16px]">
           <div className="shrink-0 flex items-center justify-center w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[56px] md:h-[56px] rounded-[14px] md:rounded-[16px] bg-foreground/[0.02] border border-foreground/[0.06] shadow-sm">
             <img src="/logo.png" alt="MindVault AI Logo" className="w-[82%] h-[82%] object-contain" />
@@ -18,16 +18,20 @@ const LandingPage: React.FC = () => {
             <span className="text-[10px] uppercase font-medium text-muted-foreground tracking-[0.1em] mt-1 leading-none">Zero-Trust AI Brain</span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <Link to="/login">
-            <Button variant="ghost" size="sm">Sign In</Button>
-          </Link>
-          <Link to="/signup">
-            <Button variant="default" size="sm" className="gap-1.5 shadow-sm">
-              Open Vault <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          </Link>
+        <div className="flex items-center">
+          <div className="mr-[24px] md:mr-[32px]">
+            <ThemeToggle />
+          </div>
+          <div className="flex items-center gap-[24px] md:gap-[32px]">
+            <Link to="/login">
+              <Button variant="ghost" size="sm" className="hover:bg-foreground/5">Sign In</Button>
+            </Link>
+            <Link to="/signup">
+              <Button variant="default" size="sm" className="gap-1.5 shadow-sm">
+                Open Vault <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
