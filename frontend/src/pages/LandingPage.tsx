@@ -37,7 +37,7 @@ const LandingPage: React.FC = () => {
 
       <main className="flex-1 flex flex-col items-center">
         {/* Hero Section */}
-        <section className="py-20 md:py-28 px-6 text-center max-w-4xl mx-auto animate-fade-in">
+        <section className="pt-12 pb-20 md:pt-16 md:pb-28 px-6 text-center max-w-4xl mx-auto animate-fade-in">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-foreground/5 border border-foreground/10 text-foreground text-xs font-semibold uppercase tracking-wider mb-8 shadow-subtle">
             <ShieldCheck className="h-4 w-4" /> Cryptographically Isolated Second Brain
           </div>
