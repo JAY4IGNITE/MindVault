@@ -121,12 +121,12 @@ const MemoryGraphPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-surface p-1.5 rounded-xl border border-border shadow-subtle">
-          <Filter className="h-3.5 w-3.5 text-muted ml-2" />
+        <div className="flex items-center gap-2 bg-foreground/5 p-1.5 rounded-xl border border-foreground/10 shadow-subtle">
+          <Filter className="h-3.5 w-3.5 text-muted-foreground ml-2" />
           <select
             value={timeFilter}
             onChange={(e) => setTimeFilter(e.target.value)}
-            className="bg-transparent text-xs text-primary border-none focus:ring-0 cursor-pointer pr-4"
+            className="bg-transparent text-xs text-foreground border-none focus:ring-0 cursor-pointer pr-4"
             disabled={isLoading}
           >
             {FILTER_OPTIONS.map((opt) => (
@@ -143,16 +143,16 @@ const MemoryGraphPage: React.FC = () => {
 
       {/* Main Canvas & Details Sidebar Container */}
       <div className="flex-1 flex gap-4 overflow-hidden relative">
-        <Card className="flex-1 overflow-hidden relative border-border bg-slate-50/50" ref={containerRef}>
+        <Card className="flex-1 overflow-hidden relative border-foreground/10 bg-foreground/[0.01]" ref={containerRef}>
           {isLoading && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-surface/60 backdrop-blur-xs">
-              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/60 backdrop-blur-xs">
+              <Loader2 className="h-8 w-8 animate-spin text-foreground" />
             </div>
           )}
 
           {/* Legend Overlay */}
-          <div className="absolute bottom-4 left-4 z-10 bg-white/90 backdrop-blur-md p-3 rounded-xl border border-border shadow-subtle text-[11px] space-y-1.5 pointer-events-none">
-            <span className="font-semibold text-primary block mb-1">Entity Topology</span>
+          <div className="absolute bottom-4 left-4 z-10 bg-background/80 backdrop-blur-md p-3 rounded-xl border border-foreground/10 shadow-subtle text-[11px] space-y-1.5 pointer-events-none">
+            <span className="font-semibold text-foreground block mb-1">Entity Topology</span>
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-[#0284c7]"></span>
               <span>Memory</span>

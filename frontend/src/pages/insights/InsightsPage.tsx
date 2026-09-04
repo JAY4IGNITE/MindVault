@@ -51,12 +51,12 @@ const InsightsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-border/60">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-foreground/10">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-display text-primary-dark flex items-center gap-2">
-            <Lightbulb className="h-7 w-7 text-accent" /> Longitudinal Insights
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground flex items-center gap-2">
+            <Lightbulb className="h-7 w-7 text-muted-foreground" /> Longitudinal Insights
           </h1>
-          <p className="text-xs sm:text-sm text-secondary">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Behavioral and intellectual patterns synthesized organically from your vault archives.
           </p>
         </div>
@@ -66,7 +66,7 @@ const InsightsPage: React.FC = () => {
           disabled={isGenerating}
           variant="outline"
           size="sm"
-          className="gap-2 border-sky-200 text-accent hover:bg-sky-50 shadow-subtle text-xs"
+          className="gap-2 border-foreground/10 text-foreground hover:bg-foreground/5 shadow-subtle text-xs"
         >
           {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
           {isGenerating ? 'Synthesizing...' : 'Refresh Pattern Analysis'}
