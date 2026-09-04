@@ -178,8 +178,8 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         transition={{ duration: 0.35, ease: 'easeOut' }}
         className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10"
       >
-        <div className={cn("flex-1 p-3 sm:p-5 md:p-6 lg:p-6 flex flex-col min-h-0", location.pathname === '/chat' ? "overflow-hidden" : "overflow-y-auto")}>
-          <div className={cn("mx-auto w-full flex-1 flex flex-col min-h-0", location.pathname === '/chat' ? "max-w-5xl h-full" : "max-w-6xl")}>
+        <div className={cn("flex-1 p-3 sm:p-5 md:p-6 lg:p-8 flex flex-col min-h-0", (location.pathname === '/chat' || location.pathname === '/memory-graph') ? "overflow-hidden" : "overflow-y-auto")}>
+          <div className={cn("mx-auto w-full flex-1 flex flex-col min-h-0", location.pathname === '/chat' ? "max-w-5xl h-full" : "max-w-[1240px] h-full")}>
             {children}
           </div>
         </div>
