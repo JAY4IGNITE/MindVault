@@ -38,8 +38,8 @@ const queryClient = new QueryClient({
 
 const PageLoader: React.FC = () => (
   <div className="h-full min-h-[300px] w-full flex flex-col items-center justify-center gap-3">
-    <Loader2 className="h-7 w-7 animate-spin text-accent" />
-    <span className="text-xs text-secondary font-medium tracking-wide">
+    <Loader2 className="h-7 w-7 animate-spin text-blue-500" />
+    <span className="text-xs text-muted-foreground font-medium tracking-wide">
       Accessing encrypted vault module...
     </span>
   </div>
