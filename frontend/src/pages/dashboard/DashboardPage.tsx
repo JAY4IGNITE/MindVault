@@ -11,7 +11,6 @@ import {
   MessageSquare,
   ArrowRight,
   Clock,
-  Loader2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AskMemoryCard } from './components/AskMemoryCard';
@@ -29,8 +28,6 @@ const DashboardPage: React.FC = () => {
   const [stats, setStats] = React.useState({ journals: 0, memories: 0, goals: 0, decisions: 0 });
   const [recentActivities, setRecentActivities] = React.useState<any[]>([]);
   const [emergingTheme, setEmergingTheme] = React.useState<any>(null);
-  const [isSeeding, setIsSeeding] = React.useState(false);
-  const [seedSuccess, setSeedSuccess] = React.useState(false);
 
   const fetchDashboardData = React.useCallback(async () => {
     if (!currentUser) return;
@@ -127,20 +124,6 @@ const DashboardPage: React.FC = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  const handleSeedDemo = async () => {
-    setIsSeeding(true);
-    try {
-      await api.post('/api/v1/intelligence/seed-demo');
-      setSeedSuccess(true);
-      await fetchDashboardData();
-      setTimeout(() => setSeedSuccess(false), 3500);
-    } catch (e) {
-      console.error('Failed to load presentation demo data', e);
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
   return (
     <div className="h-full flex flex-col justify-between gap-3 sm:gap-4 animate-fade-in min-h-0 overflow-hidden">
       {/* Header and Quick Actions (Compact) */}
@@ -154,21 +137,6 @@ const DashboardPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSeedDemo}
-            disabled={isSeeding}
-            className="h-9 px-3.5 rounded-full text-xs font-medium gap-1.5 border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/5 hover:bg-purple-500/10 transition-all shadow-xs"
-            title="Load comprehensive presentation mock data for demonstration & testing"
-          >
-            {isSeeding ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-            )}
-            {isSeeding ? 'Loading Demo...' : seedSuccess ? 'Demo Loaded!' : 'Presentation Demo'}
-          </Button>
           <Link to="/chat">
             <Button variant="outline" size="sm" className="h-9 px-4 rounded-full text-xs font-medium gap-1.5 border-border/70 hover:bg-muted/50">
               <MessageSquare className="h-3.5 w-3.5" /> Chat
