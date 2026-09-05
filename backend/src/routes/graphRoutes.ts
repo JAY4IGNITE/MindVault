@@ -12,6 +12,7 @@ const graphQuerySchema = z.object({
     .transform(Number)
     .optional()
     .default('30'),
+  refresh: z.string().optional(),
 });
 
 export async function graphRoutes(fastify: FastifyInstance) {
@@ -24,15 +25,17 @@ export async function graphRoutes(fastify: FastifyInstance) {
       });
     }
 
-    const { days } = parseResult.data;
+    const { days, refresh } = parseResult.data;
     const uid = request.user.uid;
     const cacheKey = `graph:${uid}:${days}`;
 
     try {
-      // Return cached graph immediately if available (<5ms)
-      const cached = await redisService.get(cacheKey);
-      if (cached) {
-        return reply.code(200).send(cached);
+      // Return cached graph immediately if available and not explicitly refreshing (<5ms)
+      if (!refresh) {
+        const cached = await redisService.get(cacheKey);
+        if (cached) {
+          return reply.code(200).send(cached);
+        }
       }
 
       const graphData = await getUserGraphData(uid, days);

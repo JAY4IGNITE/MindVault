@@ -87,12 +87,13 @@ const MemoryGraphPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-  const fetchGraphData = useCallback(async () => {
+  const fetchGraphData = useCallback(async (isRefresh = false) => {
     if (!currentUser) return;
     setIsLoading(true);
     setHasError(false);
     try {
-      const res = await api.get(`/api/v1/graph?days=${timeFilter}`);
+      const url = `/api/v1/graph?days=${timeFilter}${isRefresh ? '&refresh=true' : ''}`;
+      const res = await api.get(url);
       if (res.data.nodes && res.data.nodes.length > 0) {
         setGraphData({
           nodes: res.data.nodes,
@@ -194,6 +195,118 @@ const MemoryGraphPage: React.FC = () => {
     graphRef.current?.zoomToFit(400, 40);
   };
 
+  const drawNode = useCallback(
+    (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+      const isHovered = hoveredNode?.id === node.id;
+      const isConnected = hoveredNode ? connectedNodeIds.has(node.id) : true;
+      const isSelected = selectedNode?.id === node.id;
+      const cfg = NODE_CONFIG[node.type] || DEFAULT_CONFIG;
+      const color = isDark ? cfg.darkBg : cfg.bg;
+      const radius = Math.max(9, Math.min(22, (node.val || 5) * 1.5));
+
+      // Glow halo for selected or hovered
+      if (isHovered || isSelected) {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius + 7, 0, 2 * Math.PI, false);
+        ctx.fillStyle = isSelected
+          ? 'rgba(99, 102, 241, 0.45)'
+          : isDark
+          ? 'rgba(255, 255, 255, 0.3)'
+          : 'rgba(79, 70, 229, 0.3)';
+        ctx.fill();
+      }
+
+      // Outer circle fill
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, false);
+      ctx.fillStyle = !isConnected
+        ? isDark
+          ? 'rgba(100, 116, 139, 0.3)'
+          : 'rgba(203, 213, 225, 0.4)'
+        : color;
+      ctx.fill();
+
+      // Circle border
+      ctx.lineWidth = isSelected ? 3.5 : 2;
+      ctx.strokeStyle = isSelected
+        ? '#ffffff'
+        : isDark
+        ? 'rgba(255, 255, 255, 0.6)'
+        : 'rgba(0, 0, 0, 0.2)';
+      ctx.stroke();
+
+      // Category symbol / icon inside circle
+      const symbol =
+        node.type === 'goal'
+          ? '🎯'
+          : node.type === 'decision'
+          ? '⚖️'
+          : node.type === 'idea'
+          ? '💡'
+          : node.type === 'topic'
+          ? '🏷️'
+          : '🧠';
+
+      const iconSize = Math.max(9, radius * 0.9);
+      ctx.font = `${iconSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(symbol, node.x, node.y);
+
+      // Node Label Pill (Below circle)
+      const label = node.label || node.id;
+      const cleanLabel = label.length > 28 ? label.substring(0, 26) + '…' : label;
+      const fontSize = Math.max(9, 12 / Math.max(globalScale, 0.7));
+      ctx.font = `600 ${fontSize}px system-ui, -apple-system, sans-serif`;
+      const textWidth = ctx.measureText(cleanLabel).width;
+      const pillPadX = 8;
+      const pillPadY = 4;
+      const pillW = textWidth + pillPadX * 2;
+      const pillH = fontSize + pillPadY * 2;
+      const pillX = node.x - pillW / 2;
+      const pillY = node.y + radius + 4;
+      const pillR = 5;
+
+      // Draw background pill for text
+      ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.96)';
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(pillX, pillY, pillW, pillH, pillR);
+      } else {
+        ctx.rect(pillX, pillY, pillW, pillH);
+      }
+      ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = isSelected
+        ? '#6366f1'
+        : isDark
+        ? 'rgba(255, 255, 255, 0.18)'
+        : 'rgba(0, 0, 0, 0.12)';
+      ctx.stroke();
+
+      // Draw text
+      ctx.fillStyle = !isConnected
+        ? isDark
+          ? '#64748b'
+          : '#94a3b8'
+        : isDark
+        ? '#f8fafc'
+        : '#0f172a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(cleanLabel, node.x, pillY + pillH / 2);
+    },
+    [hoveredNode, selectedNode, connectedNodeIds, isDark]
+  );
+
+  const paintNodePointerArea = useCallback((node: any, color: string, ctx: CanvasRenderingContext2D) => {
+    const radius = Math.max(9, Math.min(22, (node.val || 5) * 1.5));
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, radius + 6, 0, 2 * Math.PI, false);
+    ctx.fill();
+  }, []);
+
   const hasNodes = filteredData.nodes.length > 0;
   const isSingleNode = filteredData.nodes.length === 1;
 
@@ -236,7 +349,7 @@ const MemoryGraphPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchGraphData}
+            onClick={() => fetchGraphData(true)}
             disabled={isLoading}
             className="h-8 sm:h-9 px-3.5 rounded-full text-xs sm:text-sm gap-1.5 border-border/80 hover:bg-foreground/5 shadow-xs font-medium"
           >
@@ -272,7 +385,7 @@ const MemoryGraphPage: React.FC = () => {
               <p className="text-xs sm:text-sm text-muted-foreground max-w-sm">
                 We couldn't retrieve your memory relationships right now.
               </p>
-              <Button onClick={fetchGraphData} size="sm" variant="outline" className="rounded-xl mt-2">
+              <Button onClick={() => fetchGraphData()} size="sm" variant="outline" className="rounded-xl mt-2">
                 Retry
               </Button>
             </div>
@@ -395,46 +508,46 @@ const MemoryGraphPage: React.FC = () => {
               width={dimensions.width}
               height={dimensions.height}
               graphData={filteredData}
+              nodeCanvasObject={drawNode}
+              nodePointerAreaPaint={paintNodePointerArea}
               nodeLabel={(node: any) => `
                 <div style="background: rgba(15, 23, 42, 0.95); color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-family: sans-serif; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
                   <span style="font-weight: 700; text-transform: capitalize; color: ${isDark ? (NODE_CONFIG[node.type]?.darkBg || '#94a3b8') : (NODE_CONFIG[node.type]?.bg || '#64748b')};">${node.type}</span>: ${node.label}
                 </div>
               `}
-              nodeColor={(node: any) => {
-                const cfg = NODE_CONFIG[node.type] || DEFAULT_CONFIG;
-                const baseColor = isDark ? cfg.darkBg : cfg.bg;
-                if (hoveredNode && !connectedNodeIds.has(node.id)) {
-                  return isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(203, 213, 225, 0.4)';
-                }
-                return baseColor;
-              }}
-              nodeVal={(node: any) => (node.val || 5) * 1.4}
-              linkColor={(link: any) => {
+              linkCurvature={0.08}
+              linkDirectionalArrowLength={6}
+              linkDirectionalArrowRelPos={1}
+              linkDirectionalArrowColor={(link: any) =>
+                isDark ? 'rgba(148, 163, 184, 0.75)' : 'rgba(100, 116, 139, 0.75)'
+              }
+              linkDirectionalParticles={(link: any) => {
                 const sId = typeof link.source === 'object' ? link.source.id : link.source;
                 const tId = typeof link.target === 'object' ? link.target.id : link.target;
-                if (hoveredNode && (sId === hoveredNode.id || tId === hoveredNode.id)) {
-                  return isDark ? 'rgba(129, 140, 248, 0.9)' : 'rgba(79, 70, 229, 0.8)';
-                }
-                return isDark ? 'rgba(148, 163, 184, 0.22)' : 'rgba(148, 163, 184, 0.4)';
+                return hoveredNode && (sId === hoveredNode.id || tId === hoveredNode.id) ? 4 : 2;
               }}
+              linkDirectionalParticleSpeed={0.006}
+              linkDirectionalParticleWidth={2.5}
               linkWidth={(link: any) => {
                 const sId = typeof link.source === 'object' ? link.source.id : link.source;
                 const tId = typeof link.target === 'object' ? link.target.id : link.target;
                 if (hoveredNode && (sId === hoveredNode.id || tId === hoveredNode.id)) {
-                  return 2.5;
+                  return 3;
                 }
-                return 1.2;
+                return 1.8;
               }}
-              linkDirectionalParticles={(link: any) => {
+              linkColor={(link: any) => {
                 const sId = typeof link.source === 'object' ? link.source.id : link.source;
                 const tId = typeof link.target === 'object' ? link.target.id : link.target;
-                return hoveredNode && (sId === hoveredNode.id || tId === hoveredNode.id) ? 3 : 1;
+                if (hoveredNode && (sId === hoveredNode.id || tId === hoveredNode.id)) {
+                  return isDark ? '#818cf8' : '#4f46e5';
+                }
+                return isDark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(100, 116, 139, 0.55)';
               }}
-              linkDirectionalParticleSpeed={0.005}
-              linkDirectionalParticleWidth={2}
               onNodeClick={(node: any) => handleNodeClick(node)}
               onNodeHover={(node: any) => setHoveredNode(node || null)}
               backgroundColor={isDark ? '#0b0c10' : '#f8fafc'}
+              d3VelocityDecay={0.3}
               cooldownTicks={120}
               onEngineStop={() => graphRef.current?.zoomToFit(400, 40)}
             />

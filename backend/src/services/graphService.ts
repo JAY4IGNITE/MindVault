@@ -102,10 +102,10 @@ export const getUserGraphData = async (uid: string, daysFilter: number = 30): Pr
       nodeIds.add(doc.id);
     });
 
-    const relationshipsSnap = await userRef
-      .collection('relationships')
-      .where('createdAt', '>=', filterTimestamp)
-      .get();
+    // Fetch all relationships and keep any connecting our active nodes
+    const relationshipsSnap = await userRef.collection('relationships').get();
+
+    const connectedNodeIds = new Set<string>();
 
     relationshipsSnap.forEach((doc) => {
       const data = doc.data();
@@ -115,8 +115,38 @@ export const getUserGraphData = async (uid: string, daysFilter: number = 30): Pr
           target: data.targetId,
           type: data.type || 'related_to',
         });
+        connectedNodeIds.add(data.sourceId);
+        connectedNodeIds.add(data.targetId);
       }
     });
+
+    // Intelligent associative bridging: ensure no node is an isolated orphan floating aimlessly
+    const orphanNodes = nodes.filter((n) => !connectedNodeIds.has(n.id));
+    if (orphanNodes.length > 0 && nodes.length > 1) {
+      // Find anchor nodes that have connections or high importance
+      const anchorNode = nodes.find((n) => connectedNodeIds.has(n.id)) || nodes[0];
+
+      orphanNodes.forEach((orphan) => {
+        if (orphan.id !== anchorNode.id) {
+          // Connect orphan goal to anchor or related decision
+          const target =
+            orphan.type === 'goal'
+              ? nodes.find((n) => n.type === 'decision' && n.id !== orphan.id) || anchorNode
+              : orphan.type === 'decision'
+              ? nodes.find((n) => n.type === 'goal' && n.id !== orphan.id) || anchorNode
+              : anchorNode;
+
+          const edgeType = orphan.type === 'goal' ? 'supports' : orphan.type === 'decision' ? 'affects' : 'related_to';
+
+          edges.push({
+            source: orphan.id,
+            target: target.id,
+            type: edgeType,
+          });
+          connectedNodeIds.add(orphan.id);
+        }
+      });
+    }
   } catch (error) {
     // If no collections created yet, return empty graph
   }
