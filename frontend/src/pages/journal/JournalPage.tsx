@@ -32,6 +32,7 @@ const JournalPage: React.FC = () => {
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   React.useEffect(() => {
     if (!currentUser) return;
@@ -42,7 +43,7 @@ const JournalPage: React.FC = () => {
         const data = doc.data();
         loaded.push({
           id: doc.id,
-          date: data.createdAt?.toDate ? data.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          date: data.date || (data.createdAt?.toDate ? data.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
           title: data.title,
           content: data.content,
           conciseSummary: data.conciseSummary,
@@ -64,18 +65,22 @@ const JournalPage: React.FC = () => {
     if (!newContent.trim() || !currentUser) return;
 
     setIsSaving(true);
+    setSaveError('');
     try {
+      const todayDate = new Date().toISOString().split('T')[0];
       await addDoc(collection(db, `users/${currentUser.uid}/journals`), {
         title: newTitle.trim() || 'Daily Reflection',
         content: newContent.trim(),
+        date: todayDate,
         createdAt: serverTimestamp(),
       });
       setIsCreating(false);
       setNewTitle('');
       setNewContent('');
       // Selection reset logic relies on onSnapshot fetching the latest document.
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to save journal entry:", err);
+      setSaveError(err.message || 'Failed to encrypt and save journal entry.');
     } finally {
       setIsSaving(false);
     }
@@ -172,6 +177,11 @@ const JournalPage: React.FC = () => {
                 <CardDescription>Jot down your thoughts. Encryption happens automatically.</CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col p-6 overflow-hidden gap-4">
+                {saveError && (
+                  <div className="p-3.5 text-xs bg-rose-500/10 border border-rose-500/20 text-rose-500 dark:text-rose-400 rounded-xl">
+                    {saveError}
+                  </div>
+                )}
                 <form id="new-entry-form" onSubmit={handleSaveEntry} className="flex-1 flex flex-col gap-4 h-full">
                   <Input
                     placeholder="Entry Title (Optional)"

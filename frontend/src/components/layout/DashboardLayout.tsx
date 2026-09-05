@@ -178,7 +178,12 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         transition={{ duration: 0.35, ease: 'easeOut' }}
         className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10"
       >
-        <div className={cn("flex-1 p-3 sm:p-5 md:p-6 lg:p-8 flex flex-col min-h-0", (location.pathname === '/chat' || location.pathname === '/memory-graph') ? "overflow-hidden" : "overflow-y-auto")}>
+        <div className={cn(
+          "flex-1 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col min-h-0",
+          (location.pathname === '/chat' || location.pathname === '/memory-graph' || location.pathname === '/dashboard')
+            ? "overflow-hidden"
+            : "overflow-y-auto"
+        )}>
           <div className={cn("mx-auto w-full flex-1 flex flex-col min-h-0", location.pathname === '/chat' ? "max-w-5xl h-full" : "max-w-[1240px] h-full")}>
             {children}
           </div>
@@ -211,7 +216,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ navItems, secondaryNavI
     </div>
 
     <motion.div
-      className="flex-1 overflow-y-auto px-4 py-6 space-y-1 scrollbar-hide"
+      className="flex-1 px-4 py-6 space-y-1"
       variants={sidebarContainer}
       initial="initial"
       animate="animate"

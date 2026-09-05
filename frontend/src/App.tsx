@@ -18,6 +18,8 @@ import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
 const ChatPage = lazy(() => import('./pages/chat/ChatPage'));
 const JournalPage = lazy(() => import('./pages/journal/JournalPage'));
+const MemoriesPage = lazy(() => import('./pages/memories/MemoriesPage'));
+const GoalsPage = lazy(() => import('./pages/goals/GoalsPage'));
 const MemoryGraphPage = lazy(() => import('./pages/graph/MemoryGraphPage'));
 const InsightsPage = lazy(() => import('./pages/insights/InsightsPage'));
 const DecisionsPage = lazy(() => import('./pages/decisions/DecisionsPage'));
@@ -68,8 +70,8 @@ const AnimatedRoutes: React.FC = () => {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/journal" element={<JournalPage />} />
-            <Route path="/memories" element={<JournalPage />} />
-            <Route path="/goals" element={<DashboardPage />} />
+            <Route path="/memories" element={<MemoriesPage />} />
+            <Route path="/goals" element={<GoalsPage />} />
             <Route path="/decisions" element={<DecisionsPage />} />
             <Route path="/decisions/:id" element={<DecisionDetailsPage />} />
             <Route path="/insights" element={<InsightsPage />} />

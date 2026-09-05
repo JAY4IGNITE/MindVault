@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card';
+import { motion } from 'motion/react';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
-import { BrainCircuit, Search, Loader2, Sparkles, AlertCircle, Quote } from 'lucide-react';
+import { BrainCircuit, Search, Loader2, Sparkles, AlertCircle, Quote, RotateCcw } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { sanitizeHtml } from '../../../lib/sanitize';
 import { cn } from '../../../lib/utils';
@@ -23,9 +23,7 @@ interface AskResponse {
 
 const SUGGESTIONS = [
   'What projects have I been focused on recently?',
-  'What recurring decisions or doubts have I logged?',
-  'Summarize my active goals for this month',
-  'What was my reflection about focus and deep work?',
+  'Summarize my active goals & reflections',
 ];
 
 export const AskMemoryCard: React.FC = () => {
@@ -81,50 +79,82 @@ export const AskMemoryCard: React.FC = () => {
     }
   };
 
+  const handleReset = () => {
+    setQuestion('');
+    setResponse(null);
+    setError(null);
+  };
+
   return (
-    <Card className="h-full flex flex-col border-foreground/5 bg-foreground/5 backdrop-blur-md shadow-sm hover:bg-foreground/10 transition-colors">
-      <CardHeader className="pb-3 border-b border-foreground/5">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <div className="h-8 w-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shadow-glow">
-              <BrainCircuit className="h-4 w-4" />
-            </div>
-            <span>Ask My Memory</span>
-          </CardTitle>
-          <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full uppercase tracking-wider">
+    <div className="h-full flex flex-col min-h-0 rounded-[22px] border border-border/70 bg-card p-4 sm:p-5 shadow-sm transition-all hover:border-border">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-border/60 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center border border-blue-500/20">
+            <BrainCircuit className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-sm sm:text-[15px] font-semibold text-foreground font-display leading-none">
+              Ask My Memory
+            </h2>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-none">
+              Semantic RAG over your private vault
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {response && (
+            <button
+              onClick={handleReset}
+              className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors px-2 py-0.5 rounded-md hover:bg-muted/50"
+              title="Clear inquiry"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>Reset</span>
+            </button>
+          )}
+          <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider border border-blue-500/20">
             RAG Recall
           </span>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 flex flex-col gap-4 pt-6">
+      {/* Main Body */}
+      <div className="flex-1 flex flex-col justify-between pt-3 gap-3 min-h-0 overflow-hidden">
         {/* Search input form */}
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="flex gap-2 shrink-0">
           <Input
-            placeholder="Ask anything about your past reflections or goals..."
+            placeholder="Ask anything about your reflections, decisions, or goals..."
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             disabled={isLoading}
-            className="flex-1 bg-foreground/5 border-foreground/10 rounded-xl h-12"
+            className="flex-1 bg-background/50 border-input rounded-xl h-9 sm:h-10 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500/20"
           />
-          <Button type="submit" variant="default" disabled={isLoading || !question.trim()} className="px-5 rounded-xl h-12 shadow-glow">
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-5 w-5" />}
+          <Button
+            type="submit"
+            size="sm"
+            disabled={isLoading || !question.trim()}
+            className="px-3.5 sm:px-4 rounded-xl h-9 sm:h-10 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+          >
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           </Button>
         </form>
 
-        {/* Suggestion pills */}
+        {/* Suggestion pills if no response yet */}
         {!response && !isLoading && !error && (
-          <div className="space-y-2 mt-2">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Suggested queries</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="flex-1 flex flex-col justify-center gap-2 py-2">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Suggested queries</p>
+            <div className="flex flex-col gap-1.5">
               {SUGGESTIONS.map((suggestion) => (
                 <button
                   key={suggestion}
                   type="button"
                   onClick={() => handleAsk(suggestion)}
-                  className="text-xs bg-foreground/[0.05] hover:bg-foreground/10 text-muted-foreground hover:text-foreground px-3 py-2 rounded-lg border border-foreground/5 transition-colors text-left"
+                  className="text-xs bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground px-3 py-2 rounded-xl border border-border/60 transition-all text-left truncate flex items-center justify-between group"
                 >
-                  {suggestion}
+                  <span className="truncate">{suggestion}</span>
+                  <Sparkles className="h-3 w-3 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
                 </button>
               ))}
             </div>
@@ -133,62 +163,55 @@ export const AskMemoryCard: React.FC = () => {
 
         {/* Loading state */}
         {isLoading && (
-          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground space-y-4 py-8 animate-pulse">
-            <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <BrainCircuit className="h-6 w-6 text-blue-400 animate-bounce" />
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground space-y-2 py-4 animate-pulse">
+            <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center border border-blue-500/20">
+              <BrainCircuit className="h-5 w-5 animate-spin" />
             </div>
-            <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground/80">Synthesizing records...</span>
+            <span className="text-xs font-medium text-muted-foreground">Synthesizing vault records...</span>
           </div>
         )}
 
         {/* Error notification */}
         {error && (
-          <div className="p-3 rounded-xl bg-destructive/10 text-destructive text-sm flex items-center gap-2 border border-destructive/20 font-medium mt-2">
-            <AlertCircle className="h-4 w-4 shrink-0" />
+          <div className="p-2.5 rounded-xl bg-destructive/10 text-destructive text-xs flex items-center gap-2 border border-destructive/20 font-medium">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* AI Answer & Source Evidence */}
+        {/* AI Answer & Source Evidence (Scrolls internally if needed) */}
         {response && (
-          <div className="space-y-4 animate-fade-in">
-            <div
-              className={cn(
-                'p-4 rounded-xl border text-sm leading-relaxed',
-                response.isPartial
-                  ? 'bg-amber-50/80 border-amber-200 text-amber-900'
-                  : 'bg-white border-sky-100 text-primary-dark shadow-subtle'
-              )}
-            >
-              <div className="flex items-center gap-2 mb-2 font-medium text-xs text-accent">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Synthesized Answer</span>
+          <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-none min-h-0 animate-fade-in">
+            <div className="p-3 rounded-xl border border-border/70 bg-muted/30 text-xs sm:text-[13px] leading-relaxed">
+              <div className="flex items-center gap-1.5 mb-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                <Sparkles className="h-3 w-3" />
+                <span>Synthesized Recall</span>
               </div>
               <div
-                className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap"
+                className="text-foreground leading-relaxed whitespace-pre-wrap"
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(response.answer) }}
               />
             </div>
 
             {/* Evidence items */}
             {response.sources.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[11px] font-bold text-muted uppercase tracking-wider flex items-center gap-1">
-                  <Quote className="h-3 w-3" /> Supporting Vault Records ({response.sources.length})
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                  <Quote className="h-2.5 w-2.5" /> Cited Sources ({response.sources.length})
                 </p>
-                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                <div className="space-y-1.5">
                   {response.sources.map((source) => (
                     <div
                       key={source.id}
-                      className="text-xs p-3 rounded-xl border border-border bg-white shadow-subtle hover:border-accent/40 transition-colors"
+                      className="text-[11px] p-2 rounded-lg border border-border/60 bg-card hover:border-border transition-colors"
                     >
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="font-semibold text-accent uppercase text-[10px] tracking-wider">
+                      <div className="flex justify-between items-center mb-0.5">
+                        <span className="font-semibold text-blue-500 uppercase text-[9px] tracking-wider">
                           {source.type.replace('_', ' ')}
                         </span>
-                        <span className="text-[10px] text-muted">{formatDate(source.createdAt)}</span>
+                        <span className="text-[9px] text-muted-foreground">{formatDate(source.createdAt)}</span>
                       </div>
-                      <p className="text-secondary line-clamp-2">{source.content}</p>
+                      <p className="text-muted-foreground line-clamp-1">{source.content}</p>
                     </div>
                   ))}
                 </div>
@@ -196,7 +219,7 @@ export const AskMemoryCard: React.FC = () => {
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
