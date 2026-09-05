@@ -147,4 +147,148 @@ export async function chatRoutes(fastify: FastifyInstance) {
       }
     }
   );
+
+  // List all conversations for the authenticated user
+  fastify.get(
+    '/conversations',
+    {
+      preHandler: verifyAuth,
+    },
+    async (request, reply) => {
+      const uid = request.user.uid;
+      try {
+        const snap = await db
+          .collection('users')
+          .doc(uid)
+          .collection('conversations')
+          .orderBy('updatedAt', 'desc')
+          .limit(50)
+          .get();
+
+        const conversations = snap.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            topic: data.topic || 'Untitled Conversation',
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt,
+            updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data.updatedAt,
+          };
+        });
+
+        return reply.code(200).send(conversations);
+      } catch (error: any) {
+        logger.error({ err: error, uid }, 'Failed to fetch conversations');
+        return reply.code(500).send({
+          error: 'Internal Server Error',
+          message: 'Failed to retrieve conversation history.',
+        });
+      }
+    }
+  );
+
+  // Get all messages for a specific conversation
+  fastify.get(
+    '/conversations/:id/messages',
+    {
+      preHandler: verifyAuth,
+    },
+    async (request, reply) => {
+      const uid = request.user.uid;
+      const { id } = request.params as { id: string };
+
+      try {
+        const convDoc = await db
+          .collection('users')
+          .doc(uid)
+          .collection('conversations')
+          .doc(id)
+          .get();
+
+        if (!convDoc.exists) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: 'Conversation not found.',
+          });
+        }
+
+        const messagesSnap = await convDoc.ref
+          .collection('messages')
+          .orderBy('timestamp', 'asc')
+          .limit(100)
+          .get();
+
+        const messages = messagesSnap.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            role: data.role,
+            content: data.content,
+            timestamp: data.timestamp?.toDate ? data.timestamp.toDate().toISOString() : data.timestamp,
+          };
+        });
+
+        return reply.code(200).send({
+          id: convDoc.id,
+          topic: convDoc.data()?.topic,
+          messages,
+        });
+      } catch (error: any) {
+        logger.error({ err: error, uid, convId: id }, 'Failed to fetch messages');
+        return reply.code(500).send({
+          error: 'Internal Server Error',
+          message: 'Failed to retrieve messages.',
+        });
+      }
+    }
+  );
+
+  // Delete a conversation and all its messages
+  fastify.delete(
+    '/conversations/:id',
+    {
+      preHandler: verifyAuth,
+    },
+    async (request, reply) => {
+      const uid = request.user.uid;
+      const { id } = request.params as { id: string };
+
+      try {
+        const convRef = db
+          .collection('users')
+          .doc(uid)
+          .collection('conversations')
+          .doc(id);
+
+        const convDoc = await convRef.get();
+        if (!convDoc.exists) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: 'Conversation not found.',
+          });
+        }
+
+        // Delete all messages subcollection
+        const messagesSnap = await convRef.collection('messages').get();
+        const batch = db.batch();
+        messagesSnap.docs.forEach((doc) => batch.delete(doc.ref));
+        batch.delete(convRef);
+        await batch.commit();
+
+        // Invalidate Redis cache
+        const cacheKey = `chat:${uid}:${id}:history`;
+        await redisService.del(cacheKey);
+
+        return reply.code(200).send({
+          success: true,
+          message: 'Conversation deleted successfully.',
+        });
+      } catch (error: any) {
+        logger.error({ err: error, uid, convId: id }, 'Failed to delete conversation');
+        return reply.code(500).send({
+          error: 'Internal Server Error',
+          message: 'Failed to delete conversation.',
+        });
+      }
+    }
+  );
 }
