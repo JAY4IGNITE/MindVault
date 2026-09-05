@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { api } from '../../lib/api';
-import { sanitizeHtml } from '../../lib/sanitize';
+import { sanitizeHtml, formatMarkdownText } from '../../lib/sanitize';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface Message {
@@ -210,6 +210,9 @@ const ChatPage: React.FC = () => {
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error: any) {
+      if (error?.response?.status === 404 && conversationId) {
+        setConversationId(null);
+      }
       const errMsg = error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Unknown error';
       console.error('Chat API error:', errMsg, error);
       const fallbackMsg: Message = {
@@ -471,7 +474,7 @@ const ChatPage: React.FC = () => {
                 >
                   <div
                     className="whitespace-pre-wrap select-text font-normal"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.content) }}
+                    dangerouslySetInnerHTML={{ __html: formatMarkdownText(msg.content) }}
                   />
                   <span
                     className={cn(
@@ -540,7 +543,10 @@ const ChatPage: React.FC = () => {
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                 End-to-End UID Authorization Guard
               </span>
-              <span className="font-medium tracking-wide text-indigo-500 dark:text-indigo-400">Gemini 3.6 Flash</span>
+              <span className="font-medium tracking-wide text-indigo-500 dark:text-indigo-400 flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-indigo-400" />
+                Gemini 3.7 Flash Engine
+              </span>
             </div>
           </div>
         </div>

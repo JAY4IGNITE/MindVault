@@ -61,20 +61,39 @@ const safetySettings = [
   },
 ];
 
+function isTransientError(err: any): boolean {
+  const status = err?.status || err?.statusCode || 0;
+  const msg = (err?.message || '').toLowerCase();
+  return (
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504 ||
+    msg.includes('429') ||
+    msg.includes('503') ||
+    msg.includes('500') ||
+    msg.includes('502') ||
+    msg.includes('504') ||
+    msg.includes('high demand') ||
+    msg.includes('service unavailable') ||
+    msg.includes('quota') ||
+    msg.includes('fetch failed') ||
+    msg.includes('overloaded') ||
+    msg.includes('econnreset') ||
+    msg.includes('etimedout') ||
+    msg.includes('resource exhausted')
+  );
+}
+
 // Helper to execute with exponential backoff retry for transient network/quota glitches
-async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 3, initialDelayMs = 500): Promise<T> {
+async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 2, initialDelayMs = 600): Promise<T> {
   let delay = initialDelayMs;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
     } catch (err: any) {
-      const isTransient =
-        err?.status === 429 ||
-        err?.message?.includes('429') ||
-        err?.message?.includes('quota') ||
-        err?.message?.includes('fetch failed') ||
-        err?.message?.includes('overloaded');
-
+      const isTransient = isTransientError(err);
       if (attempt === maxRetries || !isTransient) {
         throw err;
       }
@@ -86,12 +105,15 @@ async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 3, initial
   throw new Error('Retries exhausted');
 }
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.7-flash';
+const FALLBACK_MODELS = ['gemini-3.5-flash', 'gemini-3.6-flash'].filter((m) => m !== PRIMARY_MODEL);
+const CANDIDATE_MODELS = [PRIMARY_MODEL, ...FALLBACK_MODELS];
 
-export async function generateJson<T>(
-  prompt: string,
-  schema: z.ZodSchema<T>,
-  maxTokens: number = 2048
+async function executeWithModelFallback<T>(
+  action: (model: ReturnType<GoogleGenerativeAI['getGenerativeModel']>, modelName: string) => Promise<T>,
+  options?: {
+    systemInstruction?: string;
+  }
 ): Promise<T> {
   const apiKey = await getGeminiKey();
   if (!apiKey) {
@@ -99,19 +121,38 @@ export async function generateJson<T>(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: GEMINI_MODEL,
-    systemInstruction: SYSTEM_INSTRUCTION,
-    safetySettings,
-  });
+  let lastError: any = null;
 
+  for (const modelName of CANDIDATE_MODELS) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction: options?.systemInstruction || SYSTEM_INSTRUCTION,
+        safetySettings,
+      });
+
+      return await retryWithBackoff(() => action(model, modelName), 2, 600);
+    } catch (err: any) {
+      lastError = err;
+      logger.warn({ model: modelName, err: err?.message }, 'Model attempt failed, attempting fallback model');
+    }
+  }
+
+  throw lastError || new Error('All Gemini models failed.');
+}
+
+export async function generateJson<T>(
+  prompt: string,
+  schema: z.ZodSchema<T>,
+  maxTokens: number = 2048
+): Promise<T> {
   const generationConfig: GenerationConfig = {
     responseMimeType: 'application/json',
     maxOutputTokens: maxTokens,
     temperature: 0.2,
   };
 
-  return retryWithBackoff(async () => {
+  return executeWithModelFallback(async (model) => {
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig,
@@ -142,16 +183,9 @@ export const generateChatResponse = async (history: Content[], newMessage: strin
     return `[Mock MindVault Response]: I received your thought: "${newMessage}". (Configure GEMINI_API_KEY for live AI responses).`;
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: GEMINI_MODEL,
-    systemInstruction: SYSTEM_INSTRUCTION,
-    safetySettings,
-  });
-
   const safeMessage = `${USER_CONTENT_START}\n${newMessage}\n${USER_CONTENT_END}`;
 
-  return retryWithBackoff(async () => {
+  return executeWithModelFallback(async (model) => {
     const chat = model.startChat({
       history,
       generationConfig: {

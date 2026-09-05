@@ -38,17 +38,17 @@ export async function chatRoutes(fastify: FastifyInstance) {
       const { message: userMessageContent, conversationId: requestedConvId } = parseResult.data;
       const uid = request.user.uid;
       const userDocRef = db.collection('users').doc(uid);
-
-      let conversationId = requestedConvId;
-      let conversationRef;
+      const isNew = !requestedConvId;
+      const conversationRef = requestedConvId
+        ? userDocRef.collection('conversations').doc(requestedConvId)
+        : userDocRef.collection('conversations').doc();
+      const conversationId = conversationRef.id;
 
       try {
         let history: Content[] | null = null;
-        const cacheKey = conversationId ? `chat:${uid}:${conversationId}:history` : null;
+        const cacheKey = requestedConvId ? `chat:${uid}:${requestedConvId}:history` : null;
 
-        if (conversationId) {
-          conversationRef = userDocRef.collection('conversations').doc(conversationId);
-
+        if (requestedConvId) {
           // Fast path: Load conversation history from Redis cache (<5ms)
           if (cacheKey) {
             history = await redisService.get<Content[]>(cacheKey);
@@ -84,14 +84,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
             }
           }
         } else {
-          conversationRef = userDocRef.collection('conversations').doc();
-          conversationId = conversationRef.id;
           history = [];
-          await conversationRef.set({
-            createdAt: FieldValue.serverTimestamp(),
-            updatedAt: FieldValue.serverTimestamp(),
-            topic: userMessageContent.substring(0, 47) + '...',
-          });
         }
 
         const modelResponseContent = await geminiService.generateChatResponse(
@@ -109,8 +102,20 @@ export async function chatRoutes(fastify: FastifyInstance) {
         const updatedCacheKey = `chat:${uid}:${conversationId}:history`;
         await redisService.set(updatedCacheKey, updatedHistory, 3600);
 
-        // Persist to Firestore in batch
+        // Persist conversation and messages to Firestore in single atomic batch
         const batch = db.batch();
+        if (isNew) {
+          batch.set(conversationRef, {
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+            topic: userMessageContent.substring(0, 47) + '...',
+          });
+        } else {
+          batch.update(conversationRef, {
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        }
+
         const messagesRef = conversationRef.collection('messages');
 
         const userMsgRef = messagesRef.doc();
@@ -125,10 +130,6 @@ export async function chatRoutes(fastify: FastifyInstance) {
           role: 'model',
           content: modelResponseContent,
           timestamp: FieldValue.serverTimestamp(),
-        });
-
-        batch.update(conversationRef, {
-          updatedAt: FieldValue.serverTimestamp(),
         });
 
         await batch.commit();
