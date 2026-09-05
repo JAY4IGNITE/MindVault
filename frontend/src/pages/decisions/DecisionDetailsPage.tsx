@@ -112,7 +112,7 @@ const DecisionDetailsPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-fade-in">
       {/* Back button */}
-      <Link to="/decisions" className="inline-flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors">
+      <Link to="/decisions" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" /> Back to Decision Tracker
       </Link>
 
@@ -127,7 +127,7 @@ const DecisionDetailsPage: React.FC = () => {
               <Calendar className="h-3.5 w-3.5" /> Made on {decision.date}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-display text-primary-dark pt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground pt-1">
             {decision.decision}
           </h1>
         </div>
@@ -164,10 +164,10 @@ const DecisionDetailsPage: React.FC = () => {
             </div>
 
             <div>
-              <span className="text-xs font-semibold text-secondary uppercase tracking-wider block mb-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 Expected Observable Outcome:
               </span>
-              <p className="text-xs text-secondary leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 {decision.expectedOutcome || 'No explicit metric designated.'}
               </p>
             </div>
@@ -190,7 +190,7 @@ const DecisionDetailsPage: React.FC = () => {
                   placeholder="What actually occurred? Did the decision achieve its intended objectives?"
                   value={actualOutcome}
                   onChange={(e) => setActualOutcome(e.target.value)}
-                  className="w-full rounded-lg border border-border p-3 text-xs sm:text-sm text-primary placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="w-full rounded-lg border border-foreground/15 bg-background p-3 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30 transition"
                 />
               </div>
               <div className="flex justify-end">
@@ -221,7 +221,7 @@ const DecisionDetailsPage: React.FC = () => {
             </p>
 
             <div className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-purple-800 flex items-center gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 flex items-center gap-1.5">
                 <Lightbulb className="h-3.5 w-3.5" /> Key Takeaways for Future Decisions
               </span>
               <ul className="space-y-2">

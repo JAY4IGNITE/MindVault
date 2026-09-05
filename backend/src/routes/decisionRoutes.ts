@@ -133,6 +133,24 @@ export async function decisionRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // Delete Decision
+  fastify.delete('/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const uid = request.user.uid;
+    try {
+      const docRef = db.collection(`users/${uid}/decisions`).doc(id);
+      const doc = await docRef.get();
+      if (!doc.exists) {
+        return reply.code(404).send({ error: 'Not Found' });
+      }
+      await docRef.delete();
+      return reply.code(200).send({ status: 'deleted' });
+    } catch (e: any) {
+      logger.error({ err: e, uid, id }, 'Failed to delete decision');
+      return reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
   // Generate AI Retrospective
   fastify.post('/:id/review', async (request, reply) => {
     const { id } = request.params as { id: string };
