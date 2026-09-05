@@ -98,7 +98,7 @@ export async function generateJson<T>(
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-flash-latest',
+    model: 'gemini-1.5-flash',
     systemInstruction: SYSTEM_INSTRUCTION,
     safetySettings,
   });
@@ -142,7 +142,7 @@ export const generateChatResponse = async (history: Content[], newMessage: strin
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-flash-latest',
+    model: 'gemini-1.5-pro',
     systemInstruction: SYSTEM_INSTRUCTION,
     safetySettings,
   });

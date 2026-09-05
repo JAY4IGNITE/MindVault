@@ -109,12 +109,12 @@ const ChatPage: React.FC = () => {
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error: any) {
-      console.warn('Backend chat failed, generating local fallback response:', error);
+      const errMsg = error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Unknown error';
+      console.error('Chat API error:', errMsg, error);
       const fallbackMsg: Message = {
         id: `model_${Date.now()}`,
         role: 'model',
-        content:
-          "I have noted your reflection in your private vault buffer. As we continue, consider: what is the single most pivotal factor driving this priority?",
+        content: `⚠️ Unable to reach the AI service right now. Error: ${errMsg}\n\nPlease try again in a moment — the server may be waking up (cold start ~30s on free tier).`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, fallbackMsg]);
