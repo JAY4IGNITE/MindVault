@@ -105,7 +105,7 @@ const SignupPage: React.FC = () => {
             variants={{ initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } } }}
           >
             <div className="h-[52px] w-[52px] sm:h-[58px] sm:w-[58px] mb-2 flex items-center justify-center">
-              <img src="/logo.png" alt="MindVault AI" className="w-full h-full object-contain drop-shadow-sm" />
+              <img src="/logo-128.webp" width={58} height={58} alt="MindVault AI" className="w-full h-full object-contain drop-shadow-sm" />
             </div>
             <h1 className="text-[24px] sm:text-[26px] font-display font-bold text-foreground leading-tight tracking-tight">
               Welcome to MindVault

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -21,6 +21,7 @@ import {
   collection,
   query,
   orderBy,
+  limit,
   onSnapshot,
   addDoc,
   deleteDoc,
@@ -78,7 +79,7 @@ const GoalsPage: React.FC = () => {
 
   useEffect(() => {
     if (!currentUser) return;
-    const q = query(collection(db, `users/${currentUser.uid}/goals`), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, `users/${currentUser.uid}/goals`), orderBy('createdAt', 'desc'), limit(100));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -177,18 +178,28 @@ const GoalsPage: React.FC = () => {
     }
   };
 
-  const filteredGoals = goals.filter((g) => {
-    const titleMatches = g.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const descMatches = (g.description || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSearch = !searchQuery.trim() || titleMatches || descMatches;
-    const matchesStatus = selectedStatus === 'all' || g.status === selectedStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredGoals = useMemo(() => {
+    const qLower = searchQuery.trim().toLowerCase();
+    return goals.filter((g) => {
+      const titleMatches = g.title.toLowerCase().includes(qLower);
+      const descMatches = (g.description || '').toLowerCase().includes(qLower);
+      const matchesSearch = !qLower || titleMatches || descMatches;
+      const matchesStatus = selectedStatus === 'all' || g.status === selectedStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [goals, searchQuery, selectedStatus]);
 
-  const totalGoals = goals.length;
-  const completedGoals = goals.filter((g) => g.status === 'completed').length;
-  const inProgressGoals = goals.filter((g) => g.status === 'in_progress').length;
-  const completionRate = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
+  const { totalGoals, completedGoals, inProgressGoals, completionRate } = useMemo(() => {
+    const total = goals.length;
+    let completed = 0;
+    let inProgress = 0;
+    for (const g of goals) {
+      if (g.status === 'completed') completed++;
+      else if (g.status === 'in_progress') inProgress++;
+    }
+    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { totalGoals: total, completedGoals: completed, inProgressGoals: inProgress, completionRate: rate };
+  }, [goals]);
 
   const getPriorityBadge = (p: string) => {
     switch (p) {

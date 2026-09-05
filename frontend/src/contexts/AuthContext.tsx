@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { User, onAuthStateChanged, signOut as fbSignOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -38,29 +37,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       await fbSignOut(auth);
     } catch (e) {
       // ignore
     }
     setCurrentUser(null);
-  };
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background gap-3">
-        <Loader2 className="h-7 w-7 animate-spin text-blue-500" />
-        <span className="text-sm text-muted-foreground font-medium tracking-wide">
-          Verifying MindVault cryptographic session...
-        </span>
-      </div>
-    );
-  }
+  const contextValue = useMemo<AuthContextType>(
+    () => ({
+      currentUser,
+      loading,
+      signOut,
+    }),
+    [currentUser, loading, signOut]
+  );
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, signOut }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
+

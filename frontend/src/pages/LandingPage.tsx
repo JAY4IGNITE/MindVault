@@ -39,7 +39,7 @@ const LandingPage: React.FC = () => {
       >
         <div className="flex items-center gap-[14px] md:gap-[16px]">
           <div className="shrink-0 flex items-center justify-center w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[56px] md:h-[56px]">
-            <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
+            <img src="/logo-128.webp" width={56} height={56} alt="MindVault AI Logo" className="w-full h-full object-contain" fetchPriority="high" />
           </div>
           <div className="flex flex-col justify-center mt-[2px]">
             <span className="font-display font-bold text-xl md:text-[22px] tracking-tight text-foreground leading-none">MindVault AI</span>

@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { BookText, Calendar, Plus, Sparkles, Loader2, CheckCircle2, Search, Clock } from 'lucide-react';
 import { sanitizeHtml } from '../../lib/sanitize';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -17,8 +17,6 @@ interface JournalEntry {
   topics?: string[];
   mood?: string;
 }
-
-
 
 const JournalPage: React.FC = () => {
   const { currentUser } = useAuth();
@@ -36,7 +34,7 @@ const JournalPage: React.FC = () => {
 
   React.useEffect(() => {
     if (!currentUser) return;
-    const q = query(collection(db, `users/${currentUser.uid}/journals`), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, `users/${currentUser.uid}/journals`), orderBy('createdAt', 'desc'), limit(50));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const loaded: JournalEntry[] = [];
       snapshot.forEach((doc) => {
@@ -86,12 +84,15 @@ const JournalPage: React.FC = () => {
     }
   };
 
-  const filteredEntries = entries.filter(
-    (e) =>
-      e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.topics?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredEntries = React.useMemo(() => {
+    const queryLower = searchQuery.toLowerCase();
+    return entries.filter(
+      (e) =>
+        e.title.toLowerCase().includes(queryLower) ||
+        e.content.toLowerCase().includes(queryLower) ||
+        e.topics?.some((t) => t.toLowerCase().includes(queryLower))
+    );
+  }, [entries, searchQuery]);
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">

@@ -32,91 +32,90 @@ const DashboardPage: React.FC = () => {
   const fetchDashboardData = React.useCallback(async () => {
     if (!currentUser) return;
     try {
-      const [journalsSnap, memoriesSnap, goalsSnap] = await Promise.all([
+      // Execute all count metrics and activity queries in parallel to eliminate waterfall latency
+      const [
+        journalsCountSnap,
+        memoriesCountSnap,
+        goalsCountSnap,
+        decResResult,
+        jSnap,
+        mSnap,
+        gSnap,
+        iSnap,
+      ] = await Promise.all([
         getCountFromServer(collection(db, `users/${currentUser.uid}/journals`)).catch(() => ({ data: () => ({ count: 0 }) })),
         getCountFromServer(collection(db, `users/${currentUser.uid}/memories`)).catch(() => ({ data: () => ({ count: 0 }) })),
         getCountFromServer(collection(db, `users/${currentUser.uid}/goals`)).catch(() => ({ data: () => ({ count: 0 }) })),
+        api.get('/api/v1/decisions').catch(() => ({ data: [] })),
+        getDocs(query(collection(db, `users/${currentUser.uid}/journals`), orderBy('createdAt', 'desc'), limit(3))).catch(() => ({ forEach: () => {} } as any)),
+        getDocs(query(collection(db, `users/${currentUser.uid}/memories`), orderBy('createdAt', 'desc'), limit(2))).catch(() => ({ forEach: () => {} } as any)),
+        getDocs(query(collection(db, `users/${currentUser.uid}/goals`), orderBy('createdAt', 'desc'), limit(2))).catch(() => ({ forEach: () => {} } as any)),
+        getDocs(query(collection(db, `users/${currentUser.uid}/insights`), orderBy('createdAt', 'desc'), limit(1))).catch(() => ({ empty: true, docs: [] } as any)),
       ]);
-      
-      let decisionsCount = 0;
-      let decs: any[] = [];
-      try {
-        const decRes = await api.get('/api/v1/decisions');
-        decisionsCount = decRes.data.length;
-        decs = decRes.data;
-      } catch (e) {
-        // ignore
-      }
+
+      const decs: any[] = Array.isArray(decResResult?.data) ? decResResult.data : [];
 
       setStats({
-        journals: journalsSnap.data().count,
-        memories: memoriesSnap.data().count,
-        goals: goalsSnap.data().count,
-        decisions: decisionsCount,
+        journals: journalsCountSnap.data().count,
+        memories: memoriesCountSnap.data().count,
+        goals: goalsCountSnap.data().count,
+        decisions: decs.length,
       });
 
       const activities: any[] = [];
-      
-      const qJ = query(collection(db, `users/${currentUser.uid}/journals`), orderBy('createdAt', 'desc'), limit(3));
-      const jSnap = await getDocs(qJ).catch(() => ({ forEach: () => {} }));
+
       jSnap.forEach((doc: any) => {
-         activities.push({
-           id: doc.id,
-           title: doc.data().title || 'Journal Entry',
-           time: doc.data().date || (doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Recent'),
-           type: 'journal',
-           snippet: doc.data().content,
-           timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
-         });
+        activities.push({
+          id: doc.id,
+          title: doc.data().title || 'Journal Entry',
+          time: doc.data().date || (doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Recent'),
+          type: 'journal',
+          snippet: doc.data().content,
+          timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
+        });
       });
 
-      const qM = query(collection(db, `users/${currentUser.uid}/memories`), orderBy('createdAt', 'desc'), limit(2));
-      const mSnap = await getDocs(qM).catch(() => ({ forEach: () => {} }));
       mSnap.forEach((doc: any) => {
-         activities.push({
-           id: doc.id,
-           title: doc.data().title || 'Atomic Memory',
-           time: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Recent',
-           type: 'memory',
-           snippet: doc.data().content || doc.data().fact,
-           timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
-         });
+        activities.push({
+          id: doc.id,
+          title: doc.data().title || 'Atomic Memory',
+          time: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Recent',
+          type: 'memory',
+          snippet: doc.data().content || doc.data().fact,
+          timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
+        });
       });
 
-      const qG = query(collection(db, `users/${currentUser.uid}/goals`), orderBy('createdAt', 'desc'), limit(2));
-      const gSnap = await getDocs(qG).catch(() => ({ forEach: () => {} }));
       gSnap.forEach((doc: any) => {
-         activities.push({
-           id: doc.id,
-           title: doc.data().title || 'Goal Milestone',
-           time: doc.data().targetDate || (doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Active'),
-           type: 'goal',
-           snippet: doc.data().description || `Status: ${doc.data().status || 'active'}`,
-           timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
-         });
+        activities.push({
+          id: doc.id,
+          title: doc.data().title || 'Goal Milestone',
+          time: doc.data().targetDate || (doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Active'),
+          type: 'goal',
+          snippet: doc.data().description || `Status: ${doc.data().status || 'active'}`,
+          timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
+        });
       });
 
-      decs.slice(0, 2).forEach(d => {
-         activities.push({
-           id: d.id,
-           title: d.decision,
-           time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
-           type: 'decision',
-           snippet: d.reasoning,
-           timestamp: d.createdAt ? new Date(d.createdAt).getTime() : 0,
-         });
+      decs.slice(0, 2).forEach((d) => {
+        activities.push({
+          id: d.id,
+          title: d.decision,
+          time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
+          type: 'decision',
+          snippet: d.reasoning,
+          timestamp: d.createdAt ? new Date(d.createdAt).getTime() : 0,
+        });
       });
 
       activities.sort((a, b) => b.timestamp - a.timestamp);
       setRecentActivities(activities.slice(0, 4));
 
-      const qI = query(collection(db, `users/${currentUser.uid}/insights`), orderBy('createdAt', 'desc'), limit(1));
-      const iSnap = await getDocs(qI);
-      if (!iSnap.empty) {
-         setEmergingTheme(iSnap.docs[0].data());
+      if (!iSnap.empty && iSnap.docs.length > 0) {
+        setEmergingTheme(iSnap.docs[0].data());
       }
     } catch (err) {
-      console.error("Error fetching dashboard data", err);
+      console.error('Error fetching dashboard data', err);
     }
   }, [currentUser]);
 

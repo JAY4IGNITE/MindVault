@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -24,6 +24,7 @@ import {
   collection,
   query,
   orderBy,
+  limit,
   onSnapshot,
   addDoc,
   deleteDoc,
@@ -82,7 +83,7 @@ const MemoriesPage: React.FC = () => {
 
   useEffect(() => {
     if (!currentUser) return;
-    const q = query(collection(db, `users/${currentUser.uid}/memories`), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, `users/${currentUser.uid}/memories`), orderBy('createdAt', 'desc'), limit(100));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -160,19 +161,22 @@ const MemoriesPage: React.FC = () => {
     }
   };
 
-  const filteredMemories = memories.filter((mem) => {
-    const memContent = (mem.content || mem.fact || '').toLowerCase();
-    const memTitle = (mem.title || '').toLowerCase();
-    const queryMatches =
-      !searchQuery.trim() ||
-      memContent.includes(searchQuery.toLowerCase()) ||
-      memTitle.includes(searchQuery.toLowerCase());
+  const filteredMemories = useMemo(() => {
+    const qLower = searchQuery.trim().toLowerCase();
+    return memories.filter((mem) => {
+      const memContent = (mem.content || mem.fact || '').toLowerCase();
+      const memTitle = (mem.title || '').toLowerCase();
+      const queryMatches =
+        !qLower ||
+        memContent.includes(qLower) ||
+        memTitle.includes(qLower);
 
-    const typeMatches = selectedType === 'all' || mem.type === selectedType;
-    const importanceMatches = (mem.importance || 0) >= minImportance;
+      const typeMatches = selectedType === 'all' || mem.type === selectedType;
+      const importanceMatches = (mem.importance || 0) >= minImportance;
 
-    return queryMatches && typeMatches && importanceMatches;
-  });
+      return queryMatches && typeMatches && importanceMatches;
+    });
+  }, [memories, searchQuery, selectedType, minImportance]);
 
   const getTypeStyle = (itemType?: string) => {
     const matched = MEMORY_TYPES.find((t) => t.value === itemType);

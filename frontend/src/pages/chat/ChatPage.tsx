@@ -268,7 +268,7 @@ const ChatPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0 pb-1">
         <div className="flex items-center gap-3">
           <div className="w-[30px] h-[30px] sm:w-[34px] sm:h-[34px] flex items-center justify-center shrink-0">
-            <img src="/logo.png" alt="MindVault AI" className="w-full h-full object-contain" />
+            <img src="/logo-128.webp" width={34} height={34} alt="MindVault AI" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-xl sm:text-[26px] font-display font-bold text-foreground tracking-tight leading-tight">
@@ -456,7 +456,7 @@ const ChatPage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0 mt-0.5">
-                    <img src="/logo.png" alt="AI" className="w-6 h-6 object-contain" />
+                    <img src="/logo-128.webp" width={24} height={24} alt="AI" className="w-6 h-6 object-contain" />
                   </div>
                 )}
 
@@ -493,7 +493,7 @@ const ChatPage: React.FC = () => {
                 className="flex gap-3 mr-auto max-w-[80%] lg:max-w-[850px]"
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0 mt-0.5">
-                  <img src="/logo.png" alt="AI" className="w-6 h-6 object-contain" />
+                  <img src="/logo-128.webp" width={24} height={24} alt="AI" className="w-6 h-6 object-contain" />
                 </div>
                 <div className="bg-foreground/[0.03] dark:bg-foreground/[0.04] border border-foreground/[0.08] rounded-[20px] rounded-tl-[4px] px-4 py-3.5 flex items-center gap-2.5 text-muted-foreground text-xs sm:text-[13px]">
                   <Loader2 className="h-4 w-4 animate-spin text-foreground shrink-0" />

@@ -49,41 +49,44 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const navigate = useNavigate();
   const { currentUser, signOut } = useAuth();
 
-  const handleSignOut = async () => {
+  const handleSignOut = React.useCallback(async () => {
     await signOut();
     navigate('/login');
-  };
+  }, [signOut, navigate]);
 
-  const NavLink = ({ item }: { item: typeof navItems[0] }) => {
-    const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
-    return (
-      <motion.div variants={sidebarItem}>
-        <Link
-          to={item.path}
-          className={cn(
-            'flex items-center justify-between rounded-[14px] px-3.5 py-3 text-[15px] font-medium transition-all duration-200 ease-out group',
-            isActive
-              ? 'bg-foreground/10 text-foreground font-semibold shadow-sm'
-              : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
-          )}
-          onClick={() => setIsMobileMenuOpen(false)}
-        >
-          <div className="flex items-center gap-3">
-            <item.icon className={cn('h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:translate-x-0.5', isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground')} />
-            <span>{item.label}</span>
-          </div>
-          {isActive && <ChevronRight className="h-4 w-4 opacity-50" />}
-        </Link>
-      </motion.div>
-    );
-  };
+  const NavLink = React.useCallback(
+    ({ item }: { item: typeof navItems[0] }) => {
+      const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+      return (
+        <motion.div variants={sidebarItem}>
+          <Link
+            to={item.path}
+            className={cn(
+              'flex items-center justify-between rounded-[14px] px-3.5 py-3 text-[15px] font-medium transition-all duration-200 ease-out group',
+              isActive
+                ? 'bg-foreground/10 text-foreground font-semibold shadow-sm'
+                : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
+            )}
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <div className="flex items-center gap-3">
+              <item.icon className={cn('h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:translate-x-0.5', isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground')} />
+              <span>{item.label}</span>
+            </div>
+            {isActive && <ChevronRight className="h-4 w-4 opacity-50" />}
+          </Link>
+        </motion.div>
+      );
+    },
+    [location.pathname]
+  );
 
   const userInitial = (currentUser?.email || 'User').charAt(0).toUpperCase();
 
   return (
     <div className="h-[100dvh] w-full overflow-hidden bg-background flex flex-col lg:flex-row relative">
-      {/* Background ambient glow */}
-      <div className="fixed inset-0 pointer-events-none opacity-50">
+      {/* Background ambient glow with GPU optimization */}
+      <div className="fixed inset-0 pointer-events-none opacity-50 will-change-transform">
         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
         <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-purple-600/10 blur-[120px]" />
       </div>
@@ -92,7 +95,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       <div className="lg:hidden shrink-0 flex items-center justify-between p-4 border-b border-foreground/10 glass-panel sticky top-0 z-50">
         <div className="flex items-center gap-[12px] md:gap-[16px]">
           <div className="shrink-0 flex items-center justify-center w-[40px] h-[40px]">
-            <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
+            <img src="/logo-128.webp" width={40} height={40} alt="MindVault AI Logo" className="w-full h-full object-contain" />
           </div>
           <span className="font-display font-bold text-lg text-foreground tracking-tight leading-none mt-0.5">MindVault AI</span>
         </div>
@@ -207,7 +210,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ navItems, secondaryNavI
   <div className="flex-1 h-full flex flex-col bg-background/60 lg:bg-foreground/[0.02] backdrop-blur-2xl border border-foreground/[0.05] rounded-[24px] shadow-2xl overflow-hidden">
     <div className="p-6 hidden lg:flex items-center gap-[14px]">
       <div className="shrink-0 flex items-center justify-center w-[40px] h-[40px]">
-        <img src="/logo.png" alt="MindVault AI Logo" className="w-full h-full object-contain" />
+        <img src="/logo-128.webp" width={40} height={40} alt="MindVault AI Logo" className="w-full h-full object-contain" />
       </div>
       <div className="flex flex-col justify-center mt-[1px]">
         <span className="font-display font-bold text-[19px] tracking-tight text-foreground leading-none">MindVault AI</span>

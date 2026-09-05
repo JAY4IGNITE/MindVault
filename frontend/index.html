@@ -6,13 +6,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MindVault AI — Private AI Second Brain</title>
     <meta name="description" content="MindVault AI guarantees personal data isolation, structured memory extraction, and intelligent longitudinal reflection." />
-    <!-- Google Fonts -->
+    <!-- Preload critical logo asset -->
+    <link rel="preload" as="image" type="image/webp" href="/logo-128.webp" />
+    <!-- Google Fonts Preconnect & Optimized Loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </noscript>
+    <style>
+      /* Inline critical App Shell styles for 0ms First Meaningful Paint */
+      #app-shell {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #09090b;
+        color: #f4f4f5;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        z-index: 9999;
+        transition: opacity 0.25s ease-out;
+      }
+      .shell-logo-container {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .shell-glow {
+        position: absolute;
+        inset: -8px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, rgba(147, 51, 234, 0.15) 60%, transparent 70%);
+        filter: blur(10px);
+        animation: shell-pulse 2s ease-in-out infinite alternate;
+      }
+      .shell-logo {
+        width: 56px;
+        height: 56px;
+        object-fit: contain;
+        position: relative;
+        z-index: 1;
+      }
+      .shell-brand {
+        margin-top: 18px;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: #f4f4f5;
+      }
+      .shell-status {
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #71717a;
+      }
+      .shell-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #3b82f6;
+        animation: shell-blink 1.2s ease-in-out infinite;
+      }
+      @keyframes shell-pulse {
+        0% { transform: scale(0.95); opacity: 0.5; }
+        100% { transform: scale(1.15); opacity: 1; }
+      }
+      @keyframes shell-blink {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+      }
+    </style>
   </head>
   <body class="bg-background text-primary antialiased selection:bg-accent/20 selection:text-accent">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Instant App Shell renders immediately upon HTML parse -->
+      <div id="app-shell" aria-hidden="true">
+        <div class="shell-logo-container">
+          <div class="shell-glow"></div>
+          <img class="shell-logo" src="/logo-128.webp" width="56" height="56" alt="MindVault AI" />
+        </div>
+        <div class="shell-brand">MindVault AI</div>
+        <div class="shell-status">
+          <span class="shell-dot"></span>
+          <span>Initializing secure vault...</span>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

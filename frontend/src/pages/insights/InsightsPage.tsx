@@ -3,11 +3,9 @@ import { RecurringThemeCard, InsightData } from '../../components/insights/Recur
 import { Button } from '../../components/ui/Button';
 import { Lightbulb, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { api } from '../../lib/api';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-
-
 
 const InsightsPage: React.FC = () => {
   const { currentUser } = useAuth();
@@ -17,7 +15,7 @@ const InsightsPage: React.FC = () => {
 
   React.useEffect(() => {
     if (!currentUser) return;
-    const q = query(collection(db, `users/${currentUser.uid}/insights`), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, `users/${currentUser.uid}/insights`), orderBy('createdAt', 'desc'), limit(20));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const loaded: InsightData[] = [];
       snapshot.forEach((doc) => {
