@@ -44,20 +44,10 @@ export const AskMemoryCard: React.FC = () => {
       setResponse(res.data);
     } catch (err: any) {
       console.error('Ask request failed:', err);
-      // Helpful fallback response if backend is offline or empty
-      setResponse({
-        answer: `Based on your recent memories in MindVault, you have logged focused time on building your private AI second brain architecture, refining tenant isolation rules, and establishing structured reflection routines.`,
-        sources: [
-          {
-            id: 'mem_demo_1',
-            type: 'memory',
-            content: 'Commitment to strict data isolation and zero client keys in browser.',
-            createdAt: new Date().toISOString(),
-            meta: { title: 'Security Constitution' },
-          },
-        ],
-        isPartial: false,
-      });
+      setError(
+        err.response?.data?.message ||
+          'Unable to synthesize memory response at this time. Please ensure you have recorded memories in your vault.'
+      );
     } finally {
       setIsLoading(false);
     }
