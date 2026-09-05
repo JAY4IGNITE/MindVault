@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyAuth } from '../middleware/auth';
 import { runPipeline } from '../services/intelligencePipeline';
 import { runInsightPipeline } from '../services/insightPipeline';
+import { seedMockData, clearMockData } from '../services/mockDataService';
 import { logger } from '../utils/logger';
 
 const processSchema = z.object({
@@ -68,6 +69,46 @@ export async function intelligenceRoutes(fastify: FastifyInstance) {
         status: 'accepted',
         message: 'Longitudinal insight generation started.',
       });
+    }
+  );
+
+  fastify.post(
+    '/seed-demo',
+    {
+      preHandler: verifyAuth,
+    },
+    async (request, reply) => {
+      const uid = request.user.uid;
+      try {
+        const result = await seedMockData(uid);
+        return reply.code(200).send(result);
+      } catch (err: any) {
+        logger.error({ err, uid }, 'Failed to seed presentation mock data');
+        return reply.code(500).send({
+          error: 'Internal Server Error',
+          message: err.message || 'Failed to seed demo data',
+        });
+      }
+    }
+  );
+
+  fastify.post(
+    '/clear-demo',
+    {
+      preHandler: verifyAuth,
+    },
+    async (request, reply) => {
+      const uid = request.user.uid;
+      try {
+        const result = await clearMockData(uid);
+        return reply.code(200).send(result);
+      } catch (err: any) {
+        logger.error({ err, uid }, 'Failed to clear mock data');
+        return reply.code(500).send({
+          error: 'Internal Server Error',
+          message: err.message || 'Failed to clear demo data',
+        });
+      }
     }
   );
 }

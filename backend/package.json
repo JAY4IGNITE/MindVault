@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "test": "jest --runInBand",
     "test:security": "jest tests/security --runInBand",
-    "test:integration": "jest tests/integration --runInBand"
+    "test:integration": "jest tests/integration --runInBand",
+    "seed:demo": "ts-node src/scripts/seedDemo.ts"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

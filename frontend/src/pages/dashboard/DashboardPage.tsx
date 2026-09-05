@@ -11,6 +11,7 @@ import {
   MessageSquare,
   ArrowRight,
   Clock,
+  Loader2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AskMemoryCard } from './components/AskMemoryCard';
@@ -28,101 +29,117 @@ const DashboardPage: React.FC = () => {
   const [stats, setStats] = React.useState({ journals: 0, memories: 0, goals: 0, decisions: 0 });
   const [recentActivities, setRecentActivities] = React.useState<any[]>([]);
   const [emergingTheme, setEmergingTheme] = React.useState<any>(null);
+  const [isSeeding, setIsSeeding] = React.useState(false);
+  const [seedSuccess, setSeedSuccess] = React.useState(false);
+
+  const fetchDashboardData = React.useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const [journalsSnap, memoriesSnap, goalsSnap] = await Promise.all([
+        getCountFromServer(collection(db, `users/${currentUser.uid}/journals`)).catch(() => ({ data: () => ({ count: 0 }) })),
+        getCountFromServer(collection(db, `users/${currentUser.uid}/memories`)).catch(() => ({ data: () => ({ count: 0 }) })),
+        getCountFromServer(collection(db, `users/${currentUser.uid}/goals`)).catch(() => ({ data: () => ({ count: 0 }) })),
+      ]);
+      
+      let decisionsCount = 0;
+      let decs: any[] = [];
+      try {
+        const decRes = await api.get('/api/v1/decisions');
+        decisionsCount = decRes.data.length;
+        decs = decRes.data;
+      } catch (e) {
+        // ignore
+      }
+
+      setStats({
+        journals: journalsSnap.data().count,
+        memories: memoriesSnap.data().count,
+        goals: goalsSnap.data().count,
+        decisions: decisionsCount,
+      });
+
+      const activities: any[] = [];
+      
+      const qJ = query(collection(db, `users/${currentUser.uid}/journals`), orderBy('createdAt', 'desc'), limit(3));
+      const jSnap = await getDocs(qJ).catch(() => ({ forEach: () => {} }));
+      jSnap.forEach((doc: any) => {
+         activities.push({
+           id: doc.id,
+           title: doc.data().title || 'Journal Entry',
+           time: doc.data().date || (doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Recent'),
+           type: 'journal',
+           snippet: doc.data().content,
+           timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
+         });
+      });
+
+      const qM = query(collection(db, `users/${currentUser.uid}/memories`), orderBy('createdAt', 'desc'), limit(2));
+      const mSnap = await getDocs(qM).catch(() => ({ forEach: () => {} }));
+      mSnap.forEach((doc: any) => {
+         activities.push({
+           id: doc.id,
+           title: doc.data().title || 'Atomic Memory',
+           time: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Recent',
+           type: 'memory',
+           snippet: doc.data().content || doc.data().fact,
+           timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
+         });
+      });
+
+      const qG = query(collection(db, `users/${currentUser.uid}/goals`), orderBy('createdAt', 'desc'), limit(2));
+      const gSnap = await getDocs(qG).catch(() => ({ forEach: () => {} }));
+      gSnap.forEach((doc: any) => {
+         activities.push({
+           id: doc.id,
+           title: doc.data().title || 'Goal Milestone',
+           time: doc.data().targetDate || (doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Active'),
+           type: 'goal',
+           snippet: doc.data().description || `Status: ${doc.data().status || 'active'}`,
+           timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
+         });
+      });
+
+      decs.slice(0, 2).forEach(d => {
+         activities.push({
+           id: d.id,
+           title: d.decision,
+           time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
+           type: 'decision',
+           snippet: d.reasoning,
+           timestamp: d.createdAt ? new Date(d.createdAt).getTime() : 0,
+         });
+      });
+
+      activities.sort((a, b) => b.timestamp - a.timestamp);
+      setRecentActivities(activities.slice(0, 4));
+
+      const qI = query(collection(db, `users/${currentUser.uid}/insights`), orderBy('createdAt', 'desc'), limit(1));
+      const iSnap = await getDocs(qI);
+      if (!iSnap.empty) {
+         setEmergingTheme(iSnap.docs[0].data());
+      }
+    } catch (err) {
+      console.error("Error fetching dashboard data", err);
+    }
+  }, [currentUser]);
 
   React.useEffect(() => {
-    if (!currentUser) return;
-    const fetchDashboardData = async () => {
-      try {
-        const [journalsSnap, memoriesSnap, goalsSnap] = await Promise.all([
-          getCountFromServer(collection(db, `users/${currentUser.uid}/journals`)).catch(() => ({ data: () => ({ count: 0 }) })),
-          getCountFromServer(collection(db, `users/${currentUser.uid}/memories`)).catch(() => ({ data: () => ({ count: 0 }) })),
-          getCountFromServer(collection(db, `users/${currentUser.uid}/goals`)).catch(() => ({ data: () => ({ count: 0 }) })),
-        ]);
-        
-        let decisionsCount = 0;
-        let decs: any[] = [];
-        try {
-          const decRes = await api.get('/api/v1/decisions');
-          decisionsCount = decRes.data.length;
-          decs = decRes.data;
-        } catch (e) {
-          // ignore
-        }
-
-        setStats({
-          journals: journalsSnap.data().count,
-          memories: memoriesSnap.data().count,
-          goals: goalsSnap.data().count,
-          decisions: decisionsCount,
-        });
-
-        const activities: any[] = [];
-        
-        const qJ = query(collection(db, `users/${currentUser.uid}/journals`), orderBy('createdAt', 'desc'), limit(3));
-        const jSnap = await getDocs(qJ).catch(() => ({ forEach: () => {} }));
-        jSnap.forEach((doc: any) => {
-           activities.push({
-             id: doc.id,
-             title: doc.data().title || 'Journal Entry',
-             time: doc.data().date || (doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Recent'),
-             type: 'journal',
-             snippet: doc.data().content,
-             timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
-           });
-        });
-
-        const qM = query(collection(db, `users/${currentUser.uid}/memories`), orderBy('createdAt', 'desc'), limit(2));
-        const mSnap = await getDocs(qM).catch(() => ({ forEach: () => {} }));
-        mSnap.forEach((doc: any) => {
-           activities.push({
-             id: doc.id,
-             title: doc.data().title || 'Atomic Memory',
-             time: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Recent',
-             type: 'memory',
-             snippet: doc.data().content || doc.data().fact,
-             timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
-           });
-        });
-
-        const qG = query(collection(db, `users/${currentUser.uid}/goals`), orderBy('createdAt', 'desc'), limit(2));
-        const gSnap = await getDocs(qG).catch(() => ({ forEach: () => {} }));
-        gSnap.forEach((doc: any) => {
-           activities.push({
-             id: doc.id,
-             title: doc.data().title || 'Goal Milestone',
-             time: doc.data().targetDate || (doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toLocaleDateString() : 'Active'),
-             type: 'goal',
-             snippet: doc.data().description || `Status: ${doc.data().status || 'active'}`,
-             timestamp: doc.data().createdAt?.toMillis ? doc.data().createdAt.toMillis() : 0,
-           });
-        });
-
-        decs.slice(0, 2).forEach(d => {
-           activities.push({
-             id: d.id,
-             title: d.decision,
-             time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
-             type: 'decision',
-             snippet: d.reasoning,
-             timestamp: d.createdAt ? new Date(d.createdAt).getTime() : 0,
-           });
-        });
-
-        activities.sort((a, b) => b.timestamp - a.timestamp);
-        setRecentActivities(activities.slice(0, 4));
-
-        const qI = query(collection(db, `users/${currentUser.uid}/insights`), orderBy('createdAt', 'desc'), limit(1));
-        const iSnap = await getDocs(qI);
-        if (!iSnap.empty) {
-           setEmergingTheme(iSnap.docs[0].data());
-        }
-      } catch (err) {
-        console.error("Error fetching dashboard data", err);
-      }
-    };
-    
     fetchDashboardData();
-  }, [currentUser]);
+  }, [fetchDashboardData]);
+
+  const handleSeedDemo = async () => {
+    setIsSeeding(true);
+    try {
+      await api.post('/api/v1/intelligence/seed-demo');
+      setSeedSuccess(true);
+      await fetchDashboardData();
+      setTimeout(() => setSeedSuccess(false), 3500);
+    } catch (e) {
+      console.error('Failed to load presentation demo data', e);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col justify-between gap-3 sm:gap-4 animate-fade-in min-h-0 overflow-hidden">
@@ -137,6 +154,21 @@ const DashboardPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSeedDemo}
+            disabled={isSeeding}
+            className="h-9 px-3.5 rounded-full text-xs font-medium gap-1.5 border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/5 hover:bg-purple-500/10 transition-all shadow-xs"
+            title="Load comprehensive presentation mock data for demonstration & testing"
+          >
+            {isSeeding ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+            )}
+            {isSeeding ? 'Loading Demo...' : seedSuccess ? 'Demo Loaded!' : 'Presentation Demo'}
+          </Button>
           <Link to="/chat">
             <Button variant="outline" size="sm" className="h-9 px-4 rounded-full text-xs font-medium gap-1.5 border-border/70 hover:bg-muted/50">
               <MessageSquare className="h-3.5 w-3.5" /> Chat
