@@ -214,7 +214,7 @@ export const generateChatResponse = async (history: Content[], newMessage: strin
 
     const result = await chat.sendMessage(safeMessage);
     const response = await result.response;
-    return response.text();
+    return response.text().replace(/<\/?user_provided_content>/gi, '').trim();
   });
 };
 
