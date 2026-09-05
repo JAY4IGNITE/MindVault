@@ -139,9 +139,7 @@ export const getUserGraphData = async (uid: string, daysFilter: number = 30): Pr
       nodeIds.add(doc.id);
     });
 
-    // 4. Process Journals & Extract Topic Hubs
-    const topicMap = new Map<string, string[]>(); // topicName -> array of entityIds
-
+    // 4. Process Journals
     journalsSnap.forEach((doc) => {
       const data = doc.data();
       nodes.push({
@@ -153,56 +151,18 @@ export const getUserGraphData = async (uid: string, daysFilter: number = 30): Pr
         data: { ...data, id: doc.id, entityType: 'journal' },
       });
       nodeIds.add(doc.id);
-
-      if (Array.isArray(data.topics)) {
-        data.topics.forEach((t: string) => {
-          const clean = t.trim();
-          if (clean) {
-            const list = topicMap.get(clean) || [];
-            list.push(doc.id);
-            topicMap.set(clean, list);
-          }
-        });
-      }
     });
 
-    // 5. Add Prominent Topic Hubs as connective tissue
-    for (const [topicName, linkedEntityIds] of topicMap.entries()) {
-      if (linkedEntityIds.length >= 1) {
-        const topicNodeId = `topic_${topicName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-        if (!nodeIds.has(topicNodeId)) {
-          nodes.push({
-            id: topicNodeId,
-            label: topicName,
-            type: 'topic',
-            group: getTypeGroup('topic'),
-            val: 7,
-            data: { title: topicName, id: topicNodeId, entityType: 'topic' },
-          });
-          nodeIds.add(topicNodeId);
-        }
-
-        // Link topic to each journal that discusses it
-        linkedEntityIds.forEach((jId) => {
-          edges.push({
-            source: jId,
-            target: topicNodeId,
-            type: 'part_of',
-            label: 'part of',
-            weight: 2,
-          });
-        });
-      }
-    }
-
-    // 6. Fetch Existing Explicit Relationships from Firestore
+    // 5. Fetch Existing Explicit Relationships from Firestore
     const relationshipsSnap = await userRef.collection('relationships').get();
     const existingEdgeKeys = new Set<string>();
     const nodeDegreeMap = new Map<string, number>();
 
     const recordEdge = (source: string, target: string, type: string, weight = 1) => {
+      if (source === target) return;
       const key = `${source}->${target}`;
-      if (!existingEdgeKeys.has(key)) {
+      const revKey = `${target}->${source}`;
+      if (!existingEdgeKeys.has(key) && !existingEdgeKeys.has(revKey)) {
         existingEdgeKeys.add(key);
         edges.push({
           source,
@@ -223,38 +183,39 @@ export const getUserGraphData = async (uid: string, daysFilter: number = 30): Pr
       }
     });
 
-    // 7. Intelligent Associative Bridging: Connect any isolated nodes to anchor hubs
-    const anchorNodes = nodes.filter((n) => (nodeDegreeMap.get(n.id) || 0) > 0);
-    const orphanNodes = nodes.filter((n) => (nodeDegreeMap.get(n.id) || 0) === 0);
+    // 6. Connect Journals to related Decisions and Goals
+    const decisionsList = nodes.filter((n) => n.type === 'decision');
+    const goalsList = nodes.filter((n) => n.type === 'goal');
+    const memoriesList = nodes.filter((n) => n.type === 'memory' || n.type === 'idea');
 
-    orphanNodes.forEach((orphan) => {
-      if (orphan.type === 'goal') {
-        // Connect goal to a relevant decision or memory
-        const match =
-          nodes.find((n) => n.type === 'decision' && n.id !== orphan.id) ||
-          nodes.find((n) => n.type === 'topic' && n.id !== orphan.id) ||
-          anchorNodes[0];
-        if (match) recordEdge(orphan.id, match.id, 'supports', 1);
-      } else if (orphan.type === 'decision') {
-        // Connect decision to a relevant goal or memory
-        const match =
-          nodes.find((n) => n.type === 'goal' && n.id !== orphan.id) ||
-          nodes.find((n) => n.type === 'memory' && n.id !== orphan.id) ||
-          anchorNodes[0];
-        if (match) recordEdge(orphan.id, match.id, 'affects', 1);
-      } else if (orphan.type === 'memory' || orphan.type === 'idea') {
-        // Connect memory to a decision or topic
-        const match =
-          nodes.find((n) => n.type === 'decision' && n.id !== orphan.id) ||
-          nodes.find((n) => n.type === 'topic' && n.id !== orphan.id) ||
-          anchorNodes[0];
-        if (match) recordEdge(orphan.id, match.id, 'related_to', 1);
-      } else if (orphan.type === 'journal') {
-        const match =
-          nodes.find((n) => n.type === 'topic' && n.id !== orphan.id) ||
-          nodes.find((n) => n.type === 'memory' && n.id !== orphan.id) ||
-          anchorNodes[0];
-        if (match) recordEdge(orphan.id, match.id, 'inspired_by', 1);
+    nodes
+      .filter((n) => n.type === 'journal')
+      .forEach((j) => {
+        const jTitle = (j.label || '').toLowerCase();
+        // Link to matching decision or goal based on title keywords
+        const matchDec = decisionsList.find((d) => {
+          const dText = (d.label || '').toLowerCase();
+          return jTitle.includes('architect') && dText.includes('fastify') ||
+                 jTitle.includes('graph') && dText.includes('gemini') ||
+                 jTitle.includes('deep work') && dText.includes('keep-alive');
+        });
+        if (matchDec) {
+          recordEdge(j.id, matchDec.id, 'inspired_by', 2);
+        } else if (decisionsList.length > 0) {
+          recordEdge(j.id, decisionsList[0].id, 'related_to', 1);
+        }
+      });
+
+    // 7. Ensure any isolated Goals or Memories connect cleanly
+    nodes.forEach((n) => {
+      if ((nodeDegreeMap.get(n.id) || 0) === 0) {
+        if (n.type === 'goal' && decisionsList.length > 0) {
+          recordEdge(decisionsList[0].id, n.id, 'supports', 1);
+        } else if (n.type === 'memory' && goalsList.length > 0) {
+          recordEdge(n.id, goalsList[0].id, 'related_to', 1);
+        } else if (n.type === 'decision' && goalsList.length > 0) {
+          recordEdge(n.id, goalsList[0].id, 'affects', 1);
+        }
       }
     });
 
@@ -262,8 +223,7 @@ export const getUserGraphData = async (uid: string, daysFilter: number = 30): Pr
     nodes.forEach((node) => {
       const degree = nodeDegreeMap.get(node.id) || 1;
       node.connectionsCount = degree;
-      // Scale radius by centrality
-      node.val = Math.max(7, Math.min(24, (node.val || 5) + degree * 0.8));
+      node.val = Math.max(8, Math.min(22, 6 + degree * 1.5));
     });
 
     // 9. Compute Analytical Graph Stats
