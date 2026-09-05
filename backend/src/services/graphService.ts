@@ -183,38 +183,80 @@ export const getUserGraphData = async (uid: string, daysFilter: number = 30): Pr
       }
     });
 
-    // 6. Connect Journals to related Decisions and Goals
+    // 6. Connect Journals to related Decisions, Goals, or Memories
     const decisionsList = nodes.filter((n) => n.type === 'decision');
     const goalsList = nodes.filter((n) => n.type === 'goal');
     const memoriesList = nodes.filter((n) => n.type === 'memory' || n.type === 'idea');
 
+    const extractKeywords = (text: string): string[] => {
+      return (text || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter((w) => w.length > 3 && !['with', 'from', 'that', 'this', 'have', 'your', 'about'].includes(w));
+    };
+
+    const findBestSemanticMatch = (sourceNode: GraphNode, candidateNodes: GraphNode[]): GraphNode | null => {
+      const sourceWords = new Set(extractKeywords(sourceNode.label + ' ' + (sourceNode.data?.topics?.join(' ') || '') + ' ' + (sourceNode.data?.description || sourceNode.data?.reasoning || '')));
+      let bestMatch: GraphNode | null = null;
+      let maxOverlap = 0;
+
+      for (const cand of candidateNodes) {
+        if (cand.id === sourceNode.id) continue;
+        const candWords = extractKeywords(cand.label + ' ' + (cand.data?.topics?.join(' ') || '') + ' ' + (cand.data?.description || cand.data?.reasoning || ''));
+        let overlap = 0;
+        for (const w of candWords) {
+          if (sourceWords.has(w)) overlap++;
+        }
+        if (overlap > maxOverlap) {
+          maxOverlap = overlap;
+          bestMatch = cand;
+        }
+      }
+
+      // If no keyword overlap, pick candidate with lowest existing degree to keep graph balanced
+      if (!bestMatch && candidateNodes.length > 0) {
+        const sorted = [...candidateNodes].sort(
+          (a, b) => (nodeDegreeMap.get(a.id) || 0) - (nodeDegreeMap.get(b.id) || 0)
+        );
+        bestMatch = sorted[0];
+      }
+
+      return bestMatch;
+    };
+
+    // Connect journals to best matching decision or goal
     nodes
       .filter((n) => n.type === 'journal')
       .forEach((j) => {
-        const jTitle = (j.label || '').toLowerCase();
-        // Link to matching decision or goal based on title keywords
-        const matchDec = decisionsList.find((d) => {
-          const dText = (d.label || '').toLowerCase();
-          return jTitle.includes('architect') && dText.includes('fastify') ||
-                 jTitle.includes('graph') && dText.includes('gemini') ||
-                 jTitle.includes('deep work') && dText.includes('keep-alive');
-        });
-        if (matchDec) {
-          recordEdge(j.id, matchDec.id, 'inspired_by', 2);
-        } else if (decisionsList.length > 0) {
-          recordEdge(j.id, decisionsList[0].id, 'related_to', 1);
+        if ((nodeDegreeMap.get(j.id) || 0) === 0) {
+          const match = findBestSemanticMatch(j, decisionsList.length > 0 ? decisionsList : goalsList);
+          if (match) {
+            recordEdge(j.id, match.id, 'inspired_by', 1.5);
+          }
         }
       });
 
-    // 7. Ensure any isolated Goals or Memories connect cleanly
+    // 7. Ensure any remaining isolated nodes connect gracefully into the network
     nodes.forEach((n) => {
       if ((nodeDegreeMap.get(n.id) || 0) === 0) {
-        if (n.type === 'goal' && decisionsList.length > 0) {
-          recordEdge(decisionsList[0].id, n.id, 'supports', 1);
-        } else if (n.type === 'memory' && goalsList.length > 0) {
-          recordEdge(n.id, goalsList[0].id, 'related_to', 1);
-        } else if (n.type === 'decision' && goalsList.length > 0) {
-          recordEdge(n.id, goalsList[0].id, 'affects', 1);
+        let candidates: GraphNode[] = [];
+        let linkType = 'related_to';
+
+        if (n.type === 'goal') {
+          candidates = decisionsList.length > 0 ? decisionsList : memoriesList;
+          linkType = 'supports';
+        } else if (n.type === 'memory' || n.type === 'idea') {
+          candidates = goalsList.length > 0 ? goalsList : decisionsList;
+          linkType = 'affects';
+        } else if (n.type === 'decision') {
+          candidates = goalsList.length > 0 ? goalsList : memoriesList;
+          linkType = 'affects';
+        }
+
+        const match = findBestSemanticMatch(n, candidates);
+        if (match) {
+          recordEdge(n.id, match.id, linkType, 1);
         }
       }
     });

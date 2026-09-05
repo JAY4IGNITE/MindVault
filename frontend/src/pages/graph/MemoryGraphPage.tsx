@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import ForceGraph2D, { ForceGraphMethods } from 'react-force-graph-2d';
+import { forceCollide } from 'd3-force';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeProvider';
@@ -26,6 +27,8 @@ import {
   ExternalLink,
   Activity,
   Layers,
+  Tag,
+  Maximize,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Link } from 'react-router-dom';
@@ -102,10 +105,13 @@ const MemoryGraphPage: React.FC = () => {
   const [activeTypes, setActiveTypes] = useState<Set<string>>(
     new Set(['memory', 'idea', 'goal', 'decision', 'topic', 'journal', 'project'])
   );
+  const [labelMode, setLabelMode] = useState<'auto' | 'all' | 'hover'>('auto');
+  const [spacingPreset, setSpacingPreset] = useState<'spacious' | 'panoramic' | 'compact'>('spacious');
 
   const graphRef = useRef<ForceGraphMethods>();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const hasInitializedZoom = useRef(false);
 
   const fetchGraphData = useCallback(async (isRefresh = false) => {
     if (!currentUser) return;
@@ -123,7 +129,7 @@ const MemoryGraphPage: React.FC = () => {
       } else {
         setGraphData(EMPTY_GRAPH_DATA);
       }
-      setTimeout(() => graphRef.current?.zoomToFit(400, 50), 400);
+      setTimeout(() => graphRef.current?.zoomToFit(400, 60), 450);
     } catch (error) {
       console.warn('Backend graph API returned error:', error);
       setHasError(true);
@@ -150,6 +156,45 @@ const MemoryGraphPage: React.FC = () => {
     updateDimensions();
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
+
+  // Configure high-repulsion physics and anti-overlap collision forces
+  useEffect(() => {
+    if (!graphRef.current) return;
+
+    const chargeStrength =
+      spacingPreset === 'panoramic' ? -1800 : spacingPreset === 'compact' ? -750 : -1250;
+    const linkDistance =
+      spacingPreset === 'panoramic' ? 220 : spacingPreset === 'compact' ? 120 : 165;
+
+    const chargeForce: any = graphRef.current.d3Force('charge');
+    if (chargeForce) {
+      chargeForce.strength(chargeStrength);
+      if (chargeForce.distanceMax) chargeForce.distanceMax(1400);
+      if (chargeForce.distanceMin) chargeForce.distanceMin(40);
+    }
+
+    const linkForce: any = graphRef.current.d3Force('link');
+    if (linkForce) {
+      linkForce.distance(linkDistance);
+      linkForce.strength(0.35);
+    }
+
+    const centerForce: any = graphRef.current.d3Force('center');
+    if (centerForce) {
+      centerForce.strength(0.03);
+    }
+
+    // Force Collision: physically ensures nodes NEVER overlap
+    graphRef.current.d3Force(
+      'collide',
+      forceCollide((node: any) => {
+        const baseRadius = Math.max(10, Math.min(24, (node.val || 6) * 1.4));
+        return baseRadius + 32;
+      }).iterations(3)
+    );
+
+    graphRef.current.d3ReheatSimulation();
+  }, [graphData, activeTypes, spacingPreset]);
 
   // Filter nodes & links based on activeTypes toggle
   const filteredData = useMemo(() => {
@@ -260,7 +305,7 @@ const MemoryGraphPage: React.FC = () => {
     graphRef.current?.zoomToFit(400, 40);
   };
 
-  // Custom Node Canvas Renderer
+  // Custom Node Canvas Renderer with Smart Level-of-Detail (LOD)
   const drawNode = useCallback(
     (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const isHovered = hoveredNode?.id === node.id;
@@ -268,25 +313,32 @@ const MemoryGraphPage: React.FC = () => {
       const isFocused = isHovered || isSelected;
       const isConnected = activeFocusNode ? connectedNodeIds.has(node.id) : true;
       const isSearchMatch =
-        searchQuery.trim() &&
+        Boolean(searchQuery.trim()) &&
         (node.label || '').toLowerCase().includes(searchQuery.toLowerCase());
 
       const cfg = NODE_CONFIG[node.type] || DEFAULT_CONFIG;
       const color = isDark ? cfg.darkBg : cfg.bg;
-      const baseRadius = Math.max(9, Math.min(22, (node.val || 5) * 1.4));
+      const baseRadius = Math.max(10, Math.min(24, (node.val || 6) * 1.4));
       const radius = isFocused || isSearchMatch ? baseRadius + 3 : baseRadius;
 
-      // Outer Glow Aura on selection or search match
+      // Dim non-connected nodes when actively focusing on an entity
+      if (activeFocusNode && !isConnected) {
+        ctx.globalAlpha = isDark ? 0.16 : 0.22;
+      } else {
+        ctx.globalAlpha = 1.0;
+      }
+
+      // Outer Glow Aura on selection, hover, or search match
       if (isFocused || isSearchMatch) {
         ctx.beginPath();
-        ctx.arc(node.x, node.y, radius + 8, 0, 2 * Math.PI, false);
+        ctx.arc(node.x, node.y, radius + 7, 0, 2 * Math.PI, false);
         ctx.fillStyle = isSelected
           ? 'rgba(99, 102, 241, 0.45)'
           : isSearchMatch
           ? 'rgba(245, 158, 11, 0.45)'
           : isDark
-          ? 'rgba(255, 255, 255, 0.28)'
-          : 'rgba(79, 70, 229, 0.28)';
+          ? 'rgba(255, 255, 255, 0.24)'
+          : 'rgba(79, 70, 229, 0.24)';
         ctx.fill();
       }
 
@@ -295,73 +347,89 @@ const MemoryGraphPage: React.FC = () => {
       ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, false);
       ctx.fillStyle = !isConnected
         ? isDark
-          ? 'rgba(100, 116, 139, 0.25)'
-          : 'rgba(203, 213, 225, 0.35)'
+          ? 'rgba(100, 116, 139, 0.3)'
+          : 'rgba(203, 213, 225, 0.4)'
         : color;
       ctx.fill();
 
-      // Border with crisp contrast
-      ctx.lineWidth = isSelected ? 3.5 : isFocused ? 2.5 : 1.8;
+      // Sharp contrast border
+      ctx.lineWidth = isSelected ? 3 : isFocused ? 2.2 : 1.6;
       ctx.strokeStyle = isSelected
         ? '#ffffff'
         : isDark
-        ? 'rgba(255, 255, 255, 0.65)'
-        : 'rgba(0, 0, 0, 0.2)';
+        ? 'rgba(255, 255, 255, 0.75)'
+        : 'rgba(0, 0, 0, 0.22)';
       ctx.stroke();
 
       // Inner Symbol / Emoji Icon
       const symbol = cfg.icon || '✦';
-      const iconSize = Math.max(9, radius * 0.9);
+      const iconSize = Math.max(9, radius * 0.85);
       ctx.font = `${iconSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(symbol, node.x, node.y);
 
-      // Node Label Pill (Rendered below circle)
-      const label = node.label || node.id;
-      const cleanLabel = label.length > 28 ? label.substring(0, 26) + '…' : label;
-      const fontSize = Math.max(9, 11.5 / Math.max(globalScale, 0.6));
-      ctx.font = `600 ${fontSize}px system-ui, -apple-system, sans-serif`;
-      const textWidth = ctx.measureText(cleanLabel).width;
-      const pillPadX = 8;
-      const pillPadY = 3.5;
-      const pillW = textWidth + pillPadX * 2;
-      const pillH = fontSize + pillPadY * 2;
-      const pillX = node.x - pillW / 2;
-      const pillY = node.y + radius + 4;
-      const pillR = 5;
+      // Level-of-Detail Label Rendering (avoids clumsy overlapping text)
+      const isMajorHub = (node.connectionsCount || 0) >= 3;
+      let shouldDrawLabel = false;
 
-      // Draw background pill for maximum text readability
-      ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)';
-      ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(pillX, pillY, pillW, pillH, pillR);
+      if (labelMode === 'all') {
+        shouldDrawLabel = true;
+      } else if (labelMode === 'hover') {
+        shouldDrawLabel = isFocused || isSearchMatch;
       } else {
-        ctx.rect(pillX, pillY, pillW, pillH);
+        // Smart LOD mode: Show for focused/search nodes, major hubs at standard zoom, or all nodes when zoomed in
+        shouldDrawLabel =
+          isFocused ||
+          isSearchMatch ||
+          (isMajorHub && globalScale >= 0.85) ||
+          globalScale >= 1.35;
       }
-      ctx.fill();
 
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = isSelected
-        ? '#6366f1'
-        : isDark
-        ? 'rgba(255, 255, 255, 0.18)'
-        : 'rgba(0, 0, 0, 0.12)';
-      ctx.stroke();
+      if (shouldDrawLabel) {
+        const label = node.label || node.id;
+        const cleanLabel = label.length > 30 ? label.substring(0, 28) + '…' : label;
+        const fontSize = Math.max(8.5, Math.min(13, 11 / Math.max(globalScale, 0.75)));
+        ctx.font = `600 ${fontSize}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+        const textWidth = ctx.measureText(cleanLabel).width;
+        const pillPadX = 8;
+        const pillPadY = 3.5;
+        const pillW = textWidth + pillPadX * 2;
+        const pillH = fontSize + pillPadY * 2;
+        const pillX = node.x - pillW / 2;
+        const pillY = node.y + radius + 5;
+        const pillR = 5;
 
-      // Draw label text
-      ctx.fillStyle = !isConnected
-        ? isDark
-          ? '#64748b'
-          : '#94a3b8'
-        : isDark
-        ? '#f8fafc'
-        : '#0f172a';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(cleanLabel, node.x, pillY + pillH / 2);
+        // Draw background pill for crystal clear text readability
+        ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.94)';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(pillX, pillY, pillW, pillH, pillR);
+        } else {
+          ctx.rect(pillX, pillY, pillW, pillH);
+        }
+        ctx.fill();
+
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = isSelected
+          ? '#6366f1'
+          : isHovered
+          ? color
+          : isDark
+          ? 'rgba(255, 255, 255, 0.18)'
+          : 'rgba(0, 0, 0, 0.12)';
+        ctx.stroke();
+
+        // Draw label text
+        ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(cleanLabel, node.x, pillY + pillH / 2);
+      }
+
+      ctx.globalAlpha = 1.0;
     },
-    [hoveredNode, selectedNode, activeFocusNode, connectedNodeIds, searchQuery, isDark]
+    [hoveredNode, selectedNode, activeFocusNode, connectedNodeIds, searchQuery, isDark, labelMode]
   );
 
   // Custom Link Canvas Renderer (Edge Relationship Labels)
@@ -466,7 +534,7 @@ const MemoryGraphPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Toolbar: Search + Time Filter + Refresh */}
+        {/* Toolbar: Search + Labels Mode + Spacing + Time Filter + Refresh */}
         <div className="flex flex-wrap items-center gap-2 self-end sm:self-center">
           {/* Instant Search Bar */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/[0.03] dark:bg-foreground/[0.04] border border-border/70 shadow-xs">
@@ -482,6 +550,61 @@ const MemoryGraphPage: React.FC = () => {
                 <X className="h-3 w-3" />
               </button>
             )}
+          </div>
+
+          {/* Label Density Switcher */}
+          <div className="hidden md:flex items-center gap-0.5 p-0.5 rounded-full bg-foreground/[0.03] dark:bg-foreground/[0.04] border border-border/70 shadow-xs text-xs">
+            <button
+              onClick={() => setLabelMode('auto')}
+              className={cn(
+                'px-2.5 py-1 rounded-full font-medium transition-all text-[11px]',
+                labelMode === 'auto'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              title="Smart LOD: labels on hover, hubs, and when zoomed in"
+            >
+              Smart Labels
+            </button>
+            <button
+              onClick={() => setLabelMode('hover')}
+              className={cn(
+                'px-2.5 py-1 rounded-full font-medium transition-all text-[11px]',
+                labelMode === 'hover'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              title="Clean: labels on hover only"
+            >
+              Hover Only
+            </button>
+            <button
+              onClick={() => setLabelMode('all')}
+              className={cn(
+                'px-2.5 py-1 rounded-full font-medium transition-all text-[11px]',
+                labelMode === 'all'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              title="Show all labels"
+            >
+              All
+            </button>
+          </div>
+
+          {/* Spacing Preset Dropdown */}
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-foreground/[0.03] dark:bg-foreground/[0.04] border border-border/70 shadow-xs">
+            <Layers className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <select
+              value={spacingPreset}
+              onChange={(e: any) => setSpacingPreset(e.target.value)}
+              className="bg-transparent text-xs text-foreground font-medium border-none focus:ring-0 cursor-pointer pr-1 outline-none"
+              title="Control repulsive distance between nodes"
+            >
+              <option value="compact" className="bg-background text-foreground">Compact Spacing</option>
+              <option value="spacious" className="bg-background text-foreground">Spacious (Default)</option>
+              <option value="panoramic" className="bg-background text-foreground">Panoramic Wide</option>
+            </select>
           </div>
 
           {/* Time Window Dropdown */}
@@ -505,7 +628,10 @@ const MemoryGraphPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchGraphData(true)}
+            onClick={() => {
+              hasInitializedZoom.current = false;
+              fetchGraphData(true);
+            }}
             disabled={isLoading}
             className="h-8 sm:h-9 px-3.5 rounded-full text-xs sm:text-sm gap-1.5 border-border/80 hover:bg-foreground/5 shadow-xs font-medium"
             title="Reload latest graph topology"
@@ -632,6 +758,21 @@ const MemoryGraphPage: React.FC = () => {
               >
                 <RotateCcw className="h-3.5 w-3.5" />
               </button>
+              <button
+                onClick={() => {
+                  setSpacingPreset((prev) => (prev === 'panoramic' ? 'spacious' : 'panoramic'));
+                }}
+                title={spacingPreset === 'panoramic' ? 'Reset to Standard Spacing' : 'Spread Nodes Farther Apart'}
+                aria-label="Spread Nodes"
+                className={cn(
+                  'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
+                  spacingPreset === 'panoramic'
+                    ? 'text-primary bg-primary/10'
+                    : 'text-foreground hover:bg-foreground/10'
+                )}
+              >
+                <Maximize className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
 
@@ -714,9 +855,16 @@ const MemoryGraphPage: React.FC = () => {
               onNodeClick={(node: any) => handleNodeClick(node)}
               onNodeHover={(node: any) => setHoveredNode(node || null)}
               backgroundColor={isDark ? '#0b0c10' : '#f8fafc'}
-              d3VelocityDecay={0.32}
-              cooldownTicks={120}
-              onEngineStop={() => graphRef.current?.zoomToFit(400, 40)}
+              d3VelocityDecay={0.35}
+              d3AlphaDecay={0.02}
+              warmupTicks={80}
+              cooldownTicks={180}
+              onEngineStop={() => {
+                if (!hasInitializedZoom.current) {
+                  hasInitializedZoom.current = true;
+                  graphRef.current?.zoomToFit(400, 60);
+                }
+              }}
             />
           )}
         </div>
