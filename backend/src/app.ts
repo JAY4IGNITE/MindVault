@@ -40,10 +40,19 @@ export async function buildApp(opts: FastifyServerOptions = {}): Promise<Fastify
       date: Date.now(),
       expiresIn: context.ttl,
     }),
-    allowList: (req) => req.url === '/health',
+    allowList: (req) => req.url === '/health' || req.url === '/',
   });
 
-  // Public Health check
+  // Public Root & Health check
+  fastify.get('/', async () => {
+    return {
+      status: 'ok',
+      service: 'mindvault-api',
+      message: 'MindVault API is running',
+      timestamp: new Date().toISOString(),
+    };
+  });
+
   fastify.get('/health', async () => {
     return {
       status: 'ok',
