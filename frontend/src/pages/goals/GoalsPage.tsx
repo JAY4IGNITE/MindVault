@@ -373,7 +373,7 @@ const GoalsPage: React.FC = () => {
                     placeholder="Describe desired outcomes, success criteria, or key steps..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-background/50 text-foreground p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none transition-all"
+                    className="w-full rounded-xl border border-input bg-background text-foreground p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none transition-all selection:bg-blue-500/30"
                   />
                 </div>
 

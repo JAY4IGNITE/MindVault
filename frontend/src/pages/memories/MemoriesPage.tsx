@@ -372,7 +372,7 @@ const MemoriesPage: React.FC = () => {
                     placeholder="Record the core observation, fact, or durable mental model (minimum 5 characters)..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-background/50 text-foreground p-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none transition-all"
+                    className="w-full rounded-xl border border-input bg-background text-foreground p-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none transition-all selection:bg-blue-500/30"
                   />
                 </div>
 

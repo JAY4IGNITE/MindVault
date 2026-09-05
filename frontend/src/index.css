@@ -72,7 +72,24 @@
   }
   
   body {
-    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20 transition-colors duration-300;
+    @apply bg-background text-foreground font-sans antialiased transition-colors duration-300;
+  }
+
+  /* Visible text selection in light mode */
+  ::selection {
+    background-color: rgba(59, 130, 246, 0.35);
+    color: inherit;
+  }
+
+  .dark ::selection {
+    background-color: rgba(99, 102, 241, 0.5);
+    color: inherit;
+  }
+
+  /* Ensure textareas always have solid backgrounds so selection is always visible */
+  textarea {
+    @apply bg-background text-foreground;
+    -webkit-text-fill-color: currentColor;
   }
   
   h1, h2, h3, h4, h5, h6 {
