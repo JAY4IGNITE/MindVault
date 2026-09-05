@@ -64,6 +64,19 @@ const safetySettings = [
 function isTransientError(err: any): boolean {
   const status = err?.status || err?.statusCode || 0;
   const msg = (err?.message || '').toLowerCase();
+
+  // If a model is hard-capped on daily quota or unavailable, retrying the SAME model will never succeed.
+  // Bypass retry immediately to trigger fast model fallback!
+  if (
+    msg.includes('generaterequestsperday') ||
+    msg.includes('quota exceeded for metric') ||
+    msg.includes('limit: 20') ||
+    msg.includes('no longer available') ||
+    msg.includes('not found for api version')
+  ) {
+    return false;
+  }
+
   return (
     status === 429 ||
     status === 500 ||
@@ -105,8 +118,13 @@ async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 2, initial
   throw new Error('Retries exhausted');
 }
 
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.7-flash';
-const FALLBACK_MODELS = ['gemini-3.5-flash', 'gemini-3.6-flash'].filter((m) => m !== PRIMARY_MODEL);
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+const FALLBACK_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.8-flash',
+  'gemini-3.5-flash',
+  'gemini-flash-latest',
+].filter((m) => m !== PRIMARY_MODEL);
 const CANDIDATE_MODELS = [PRIMARY_MODEL, ...FALLBACK_MODELS];
 
 async function executeWithModelFallback<T>(

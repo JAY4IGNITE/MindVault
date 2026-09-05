@@ -545,7 +545,7 @@ const ChatPage: React.FC = () => {
               </span>
               <span className="font-medium tracking-wide text-indigo-500 dark:text-indigo-400 flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-indigo-400" />
-                Gemini 3.7 Flash Engine
+                Gemini 3.5 Flash-Lite Engine
               </span>
             </div>
           </div>
