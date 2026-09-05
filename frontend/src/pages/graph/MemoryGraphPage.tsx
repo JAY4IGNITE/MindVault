@@ -105,7 +105,7 @@ const MemoryGraphPage: React.FC = () => {
   const [activeTypes, setActiveTypes] = useState<Set<string>>(
     new Set(['memory', 'idea', 'goal', 'decision', 'topic', 'journal', 'project'])
   );
-  const [labelMode, setLabelMode] = useState<'auto' | 'all' | 'hover'>('auto');
+  const [labelMode, setLabelMode] = useState<'all' | 'auto' | 'hover'>('all');
   const [spacingPreset, setSpacingPreset] = useState<'spacious' | 'panoramic' | 'compact'>('spacious');
 
   const graphRef = useRef<ForceGraphMethods>();
@@ -129,7 +129,10 @@ const MemoryGraphPage: React.FC = () => {
       } else {
         setGraphData(EMPTY_GRAPH_DATA);
       }
-      setTimeout(() => graphRef.current?.zoomToFit(400, 60), 450);
+      setTimeout(() => {
+        graphRef.current?.centerAt(0, 0, 400);
+        graphRef.current?.zoom(1.05, 400);
+      }, 350);
     } catch (error) {
       console.warn('Backend graph API returned error:', error);
       setHasError(true);
@@ -157,39 +160,40 @@ const MemoryGraphPage: React.FC = () => {
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Configure high-repulsion physics and anti-overlap collision forces
+  // Configure balanced, readable physics so nodes stay comfortably framed in viewport
   useEffect(() => {
     if (!graphRef.current) return;
 
     const chargeStrength =
-      spacingPreset === 'panoramic' ? -1800 : spacingPreset === 'compact' ? -750 : -1250;
+      spacingPreset === 'panoramic' ? -950 : spacingPreset === 'compact' ? -420 : -650;
     const linkDistance =
-      spacingPreset === 'panoramic' ? 220 : spacingPreset === 'compact' ? 120 : 165;
+      spacingPreset === 'panoramic' ? 175 : spacingPreset === 'compact' ? 100 : 135;
 
     const chargeForce: any = graphRef.current.d3Force('charge');
     if (chargeForce) {
       chargeForce.strength(chargeStrength);
-      if (chargeForce.distanceMax) chargeForce.distanceMax(1400);
+      if (chargeForce.distanceMax) chargeForce.distanceMax(900);
       if (chargeForce.distanceMin) chargeForce.distanceMin(40);
     }
 
     const linkForce: any = graphRef.current.d3Force('link');
     if (linkForce) {
       linkForce.distance(linkDistance);
-      linkForce.strength(0.35);
+      linkForce.strength(0.4);
     }
 
     const centerForce: any = graphRef.current.d3Force('center');
     if (centerForce) {
-      centerForce.strength(0.03);
+      centerForce.strength(0.04);
     }
 
-    // Force Collision: physically ensures nodes NEVER overlap
+    // Anti-Overlap Collision Force: sized for large, comfortable nodes
     graphRef.current.d3Force(
       'collide',
       forceCollide((node: any) => {
-        const baseRadius = Math.max(10, Math.min(24, (node.val || 6) * 1.4));
-        return baseRadius + 32;
+        const degree = node.connectionsCount || 1;
+        const radius = Math.max(22, Math.min(36, 18 + degree * 2.5));
+        return radius + 26;
       }).iterations(3)
     );
 
@@ -294,7 +298,11 @@ const MemoryGraphPage: React.FC = () => {
   };
 
   const handleZoomToFit = () => {
-    graphRef.current?.zoomToFit(400, 40);
+    graphRef.current?.zoomToFit(400, 70);
+    setTimeout(() => {
+      const z = graphRef.current?.zoom() || 1;
+      if (z < 0.85) graphRef.current?.zoom(0.95, 300);
+    }, 420);
   };
 
   const handleReset = () => {
@@ -302,10 +310,16 @@ const MemoryGraphPage: React.FC = () => {
     setHoveredNode(null);
     setSearchQuery('');
     graphRef.current?.centerAt(0, 0, 400);
-    graphRef.current?.zoomToFit(400, 40);
+    graphRef.current?.zoom(1.05, 400);
   };
 
-  // Custom Node Canvas Renderer with Smart Level-of-Detail (LOD)
+  // Helper to get substantial, readable node dimensions
+  const getNodeRadius = (node: any) => {
+    const degree = node.connectionsCount || 1;
+    return Math.max(22, Math.min(36, 18 + degree * 2.5));
+  };
+
+  // Custom Node Canvas Renderer: Large, Bold, Legible, and Informative
   const drawNode = useCallback(
     (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const isHovered = hoveredNode?.id === node.id;
@@ -318,12 +332,12 @@ const MemoryGraphPage: React.FC = () => {
 
       const cfg = NODE_CONFIG[node.type] || DEFAULT_CONFIG;
       const color = isDark ? cfg.darkBg : cfg.bg;
-      const baseRadius = Math.max(10, Math.min(24, (node.val || 6) * 1.4));
-      const radius = isFocused || isSearchMatch ? baseRadius + 3 : baseRadius;
+      const baseRadius = getNodeRadius(node);
+      const radius = isFocused || isSearchMatch ? baseRadius + 4 : baseRadius;
 
       // Dim non-connected nodes when actively focusing on an entity
       if (activeFocusNode && !isConnected) {
-        ctx.globalAlpha = isDark ? 0.16 : 0.22;
+        ctx.globalAlpha = isDark ? 0.18 : 0.24;
       } else {
         ctx.globalAlpha = 1.0;
       }
@@ -331,14 +345,14 @@ const MemoryGraphPage: React.FC = () => {
       // Outer Glow Aura on selection, hover, or search match
       if (isFocused || isSearchMatch) {
         ctx.beginPath();
-        ctx.arc(node.x, node.y, radius + 7, 0, 2 * Math.PI, false);
+        ctx.arc(node.x, node.y, radius + 8, 0, 2 * Math.PI, false);
         ctx.fillStyle = isSelected
           ? 'rgba(99, 102, 241, 0.45)'
           : isSearchMatch
           ? 'rgba(245, 158, 11, 0.45)'
           : isDark
-          ? 'rgba(255, 255, 255, 0.24)'
-          : 'rgba(79, 70, 229, 0.24)';
+          ? 'rgba(255, 255, 255, 0.28)'
+          : 'rgba(79, 70, 229, 0.28)';
         ctx.fill();
       }
 
@@ -353,55 +367,46 @@ const MemoryGraphPage: React.FC = () => {
       ctx.fill();
 
       // Sharp contrast border
-      ctx.lineWidth = isSelected ? 3 : isFocused ? 2.2 : 1.6;
+      ctx.lineWidth = isSelected ? 3.5 : isFocused ? 2.5 : 2;
       ctx.strokeStyle = isSelected
         ? '#ffffff'
         : isDark
-        ? 'rgba(255, 255, 255, 0.75)'
-        : 'rgba(0, 0, 0, 0.22)';
+        ? 'rgba(255, 255, 255, 0.85)'
+        : 'rgba(0, 0, 0, 0.25)';
       ctx.stroke();
 
-      // Inner Symbol / Emoji Icon
+      // Inner Symbol / Large Emoji Icon
       const symbol = cfg.icon || '✦';
-      const iconSize = Math.max(9, radius * 0.85);
+      const iconSize = Math.max(16, radius * 0.82);
       ctx.font = `${iconSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(symbol, node.x, node.y);
 
-      // Level-of-Detail Label Rendering (avoids clumsy overlapping text)
-      const isMajorHub = (node.connectionsCount || 0) >= 3;
-      let shouldDrawLabel = false;
-
-      if (labelMode === 'all') {
-        shouldDrawLabel = true;
-      } else if (labelMode === 'hover') {
+      // Node Label: Displayed prominently so graph is easily understood by all
+      let shouldDrawLabel = true;
+      if (labelMode === 'hover') {
         shouldDrawLabel = isFocused || isSearchMatch;
-      } else {
-        // Smart LOD mode: Show for focused/search nodes, major hubs at standard zoom, or all nodes when zoomed in
-        shouldDrawLabel =
-          isFocused ||
-          isSearchMatch ||
-          (isMajorHub && globalScale >= 0.85) ||
-          globalScale >= 1.35;
+      } else if (labelMode === 'auto') {
+        shouldDrawLabel = isFocused || isSearchMatch || globalScale >= 0.75 || (node.connectionsCount || 0) >= 3;
       }
 
       if (shouldDrawLabel) {
         const label = node.label || node.id;
-        const cleanLabel = label.length > 30 ? label.substring(0, 28) + '…' : label;
-        const fontSize = Math.max(8.5, Math.min(13, 11 / Math.max(globalScale, 0.75)));
+        const cleanLabel = label.length > 28 ? label.substring(0, 26) + '…' : label;
+        const fontSize = 12;
         ctx.font = `600 ${fontSize}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
         const textWidth = ctx.measureText(cleanLabel).width;
-        const pillPadX = 8;
-        const pillPadY = 3.5;
+        const pillPadX = 9;
+        const pillPadY = 4;
         const pillW = textWidth + pillPadX * 2;
         const pillH = fontSize + pillPadY * 2;
         const pillX = node.x - pillW / 2;
-        const pillY = node.y + radius + 5;
-        const pillR = 5;
+        const pillY = node.y + radius + 6;
+        const pillR = 6;
 
         // Draw background pill for crystal clear text readability
-        ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.94)';
+        ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)';
         ctx.beginPath();
         if (ctx.roundRect) {
           ctx.roundRect(pillX, pillY, pillW, pillH, pillR);
@@ -410,18 +415,18 @@ const MemoryGraphPage: React.FC = () => {
         }
         ctx.fill();
 
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.2;
         ctx.strokeStyle = isSelected
           ? '#6366f1'
           : isHovered
           ? color
           : isDark
-          ? 'rgba(255, 255, 255, 0.18)'
-          : 'rgba(0, 0, 0, 0.12)';
+          ? 'rgba(255, 255, 255, 0.22)'
+          : 'rgba(0, 0, 0, 0.15)';
         ctx.stroke();
 
         // Draw label text
-        ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
+        ctx.fillStyle = isDark ? '#ffffff' : '#0f172a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(cleanLabel, node.x, pillY + pillH / 2);
@@ -444,27 +449,27 @@ const MemoryGraphPage: React.FC = () => {
       const isHovered = hoveredNode && (sId === hoveredNode.id || tId === hoveredNode.id);
       const isSelected = selectedNode && (sId === selectedNode.id || tId === selectedNode.id);
 
-      // Only draw relationship labels when zoomed in (scale > 0.85) or when link is focused
-      const shouldDrawLabel = (globalScale > 0.85 || isHovered || isSelected) && link.label;
+      // Draw relationship labels clearly on links
+      const shouldDrawLabel = (globalScale > 0.6 || isHovered || isSelected) && link.label;
 
       if (shouldDrawLabel) {
         const midX = (source.x + target.x) / 2;
         const midY = (source.y + target.y) / 2;
 
         const label = link.label || link.type || 'related to';
-        const fontSize = Math.max(7.5, 9 / Math.max(globalScale, 0.65));
+        const fontSize = 10;
         ctx.font = `600 ${fontSize}px system-ui, sans-serif`;
         const textWidth = ctx.measureText(label).width;
-        const padX = 5;
-        const padY = 2;
+        const padX = 6;
+        const padY = 2.5;
         const pillW = textWidth + padX * 2;
         const pillH = fontSize + padY * 2;
 
         // Label pill background
-        ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.94)';
+        ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)';
         ctx.beginPath();
         if (ctx.roundRect) {
-          ctx.roundRect(midX - pillW / 2, midY - pillH / 2, pillW, pillH, 3);
+          ctx.roundRect(midX - pillW / 2, midY - pillH / 2, pillW, pillH, 4);
         } else {
           ctx.rect(midX - pillW / 2, midY - pillH / 2, pillW, pillH);
         }
@@ -472,14 +477,14 @@ const MemoryGraphPage: React.FC = () => {
 
         ctx.strokeStyle = isHovered || isSelected
           ? (isDark ? '#818cf8' : '#4f46e5')
-          : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)');
-        ctx.lineWidth = 0.8;
+          : (isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.14)');
+        ctx.lineWidth = 0.9;
         ctx.stroke();
 
         // Label text
         ctx.fillStyle = isHovered || isSelected
-          ? (isDark ? '#a5b4fc' : '#4338ca')
-          : (isDark ? '#94a3b8' : '#64748b');
+          ? (isDark ? '#c7d2fe' : '#3730a3')
+          : (isDark ? '#cbd5e1' : '#475569');
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(label, midX, midY);
@@ -489,10 +494,10 @@ const MemoryGraphPage: React.FC = () => {
   );
 
   const paintNodePointerArea = useCallback((node: any, color: string, ctx: CanvasRenderingContext2D) => {
-    const radius = Math.max(9, Math.min(22, (node.val || 5) * 1.4));
+    const radius = getNodeRadius(node);
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(node.x, node.y, radius + 6, 0, 2 * Math.PI, false);
+    ctx.arc(node.x, node.y, radius + 8, 0, 2 * Math.PI, false);
     ctx.fill();
   }, []);
 
@@ -834,15 +839,15 @@ const MemoryGraphPage: React.FC = () => {
                 const tId = typeof link.target === 'object' ? link.target.id : link.target;
                 return activeFocusNode && (sId === activeFocusNode.id || tId === activeFocusNode.id) ? 4 : 2;
               }}
-              linkDirectionalParticleSpeed={0.006}
-              linkDirectionalParticleWidth={2.5}
+              linkDirectionalParticleSpeed={0.007}
+              linkDirectionalParticleWidth={3.2}
               linkWidth={(link: any) => {
                 const sId = typeof link.source === 'object' ? link.source.id : link.source;
                 const tId = typeof link.target === 'object' ? link.target.id : link.target;
                 if (activeFocusNode && (sId === activeFocusNode.id || tId === activeFocusNode.id)) {
-                  return 3.2;
+                  return 4.0;
                 }
-                return 1.8;
+                return 2.5;
               }}
               linkColor={(link: any) => {
                 const sId = typeof link.source === 'object' ? link.source.id : link.source;
@@ -850,7 +855,7 @@ const MemoryGraphPage: React.FC = () => {
                 if (activeFocusNode && (sId === activeFocusNode.id || tId === activeFocusNode.id)) {
                   return isDark ? '#818cf8' : '#4f46e5';
                 }
-                return isDark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(100, 116, 139, 0.55)';
+                return isDark ? 'rgba(148, 163, 184, 0.55)' : 'rgba(100, 116, 139, 0.65)';
               }}
               onNodeClick={(node: any) => handleNodeClick(node)}
               onNodeHover={(node: any) => setHoveredNode(node || null)}
@@ -862,7 +867,8 @@ const MemoryGraphPage: React.FC = () => {
               onEngineStop={() => {
                 if (!hasInitializedZoom.current) {
                   hasInitializedZoom.current = true;
-                  graphRef.current?.zoomToFit(400, 60);
+                  graphRef.current?.centerAt(0, 0, 400);
+                  graphRef.current?.zoom(1.05, 400);
                 }
               }}
             />
