@@ -86,6 +86,8 @@ async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 3, initial
   throw new Error('Retries exhausted');
 }
 
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+
 export async function generateJson<T>(
   prompt: string,
   schema: z.ZodSchema<T>,
@@ -98,7 +100,7 @@ export async function generateJson<T>(
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: GEMINI_MODEL,
     systemInstruction: SYSTEM_INSTRUCTION,
     safetySettings,
   });
@@ -142,7 +144,7 @@ export const generateChatResponse = async (history: Content[], newMessage: strin
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: GEMINI_MODEL,
     systemInstruction: SYSTEM_INSTRUCTION,
     safetySettings,
   });
