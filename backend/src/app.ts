@@ -2,6 +2,7 @@ import Fastify, { FastifyInstance, FastifyServerOptions } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import fastifyWebsocket from '@fastify/websocket';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { chatRoutes } from './routes/chatRoutes';
@@ -9,6 +10,8 @@ import { askRoutes } from './routes/askRoutes';
 import { intelligenceRoutes } from './routes/intelligenceRoutes';
 import { graphRoutes } from './routes/graphRoutes';
 import { decisionRoutes } from './routes/decisionRoutes';
+import { handleWebSocketConnection } from './websocket/wsHandler';
+import { connectionManager } from './websocket/connectionManager';
 
 export async function buildApp(opts: FastifyServerOptions = {}): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -43,6 +46,23 @@ export async function buildApp(opts: FastifyServerOptions = {}): Promise<Fastify
     allowList: (req) => req.url === '/health' || req.url === '/',
   });
 
+  // Register Fastify WebSocket
+  await fastify.register(fastifyWebsocket, {
+    options: {
+      maxPayload: 1048576, // 1MB payload ceiling
+    },
+  });
+
+  // WebSocket real-time gateway endpoint
+  fastify.get('/ws', { websocket: true }, (socket, req) => {
+    handleWebSocketConnection(socket, req);
+  });
+
+  // Clean up connections on server shutdown
+  fastify.addHook('onClose', async () => {
+    connectionManager.cleanup();
+  });
+
   // Public Root & Health check
   fastify.get('/', async () => {
     return {
@@ -70,3 +90,4 @@ export async function buildApp(opts: FastifyServerOptions = {}): Promise<Fastify
 
   return fastify;
 }
+

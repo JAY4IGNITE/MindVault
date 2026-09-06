@@ -218,6 +218,56 @@ export const generateChatResponse = async (history: Content[], newMessage: strin
   });
 };
 
+export const generateChatResponseStream = async (
+  history: Content[],
+  newMessage: string,
+  onChunk: (delta: string) => void,
+  signal?: AbortSignal
+): Promise<string> => {
+  const apiKey = await getGeminiKey();
+  if (!apiKey) {
+    const mockWords = `[Mock MindVault Stream]: I received your thought: "${newMessage}". Configure GEMINI_API_KEY for live AI generation.`.split(' ');
+    let text = '';
+    for (const word of mockWords) {
+      if (signal?.aborted) break;
+      const part = word + ' ';
+      text += part;
+      onChunk(part);
+      await new Promise((r) => setTimeout(r, 40));
+    }
+    return text.trim();
+  }
+
+  const safeMessage = `${USER_CONTENT_START}\n${newMessage}\n${USER_CONTENT_END}`;
+
+  return executeWithModelFallback(async (model) => {
+    const chat = model.startChat({
+      history,
+      generationConfig: {
+        maxOutputTokens: 2048,
+        temperature: 0.7,
+      },
+    });
+
+    const result = await chat.sendMessageStream(safeMessage);
+    let accumulated = '';
+
+    for await (const chunk of result.stream) {
+      if (signal?.aborted) {
+        break;
+      }
+      const rawDelta = chunk.text();
+      const cleaned = rawDelta.replace(/<\/?user_provided_content>/gi, '');
+      if (cleaned) {
+        accumulated += cleaned;
+        onChunk(cleaned);
+      }
+    }
+
+    return accumulated.trim();
+  });
+};
+
 export const generateSummary = (conversationText: string) => {
   const wrappedText = `${USER_CONTENT_START}\n${conversationText}\n${USER_CONTENT_END}`;
   const prompt = `

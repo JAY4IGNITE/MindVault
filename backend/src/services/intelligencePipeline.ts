@@ -21,8 +21,32 @@ const formatConversation = async (uid: string, conversationId: string): Promise<
     .join('\n\n');
 };
 
-export const runPipeline = async (uid: string, conversationId: string): Promise<void> => {
+export interface PipelineProgressCallback {
+  (
+    stage: 'ANALYSIS_STARTED' | 'EXTRACTING_ENTITIES' | 'DETECTING_RELATIONSHIPS' | 'FINALIZING' | 'COMPLETED',
+    progress: number,
+    message: string
+  ): void;
+}
+
+export interface PipelineResult {
+  summaryId: string;
+  counts: {
+    memories: number;
+    goals: number;
+    decisions: number;
+    relationships: number;
+  };
+}
+
+export const runPipeline = async (
+  uid: string,
+  conversationId: string,
+  onProgress?: PipelineProgressCallback
+): Promise<PipelineResult | null> => {
   logger.info({ uid, conversationId }, 'Starting intelligence pipeline');
+  onProgress?.('ANALYSIS_STARTED', 10, 'Analyzing conversation dialogue and context...');
+
   const userRef = db.collection('users').doc(uid);
   const conversationRef = userRef.collection('conversations').doc(conversationId);
 
@@ -35,10 +59,11 @@ export const runPipeline = async (uid: string, conversationId: string): Promise<
     conversationText = await formatConversation(uid, conversationId);
   } catch (error) {
     logger.error({ err: error, uid, conversationId }, 'Pipeline failed at data fetch');
-    return;
+    throw error;
   }
 
   try {
+    onProgress?.('EXTRACTING_ENTITIES', 40, 'Extracting memories, goals, decisions, and topics...');
     const [summaryData, memoriesData, goalsData, decisionsData, topicsData] = await Promise.all([
       gemini.generateSummary(conversationText).catch(() => ({
         conciseSummary: 'Summary of session.',
@@ -58,6 +83,7 @@ export const runPipeline = async (uid: string, conversationId: string): Promise<
 
     let relationshipsData = { relationships: [] as any[] };
     if (allEntities.length > 1) {
+      onProgress?.('DETECTING_RELATIONSHIPS', 70, 'Detecting cognitive connections and knowledge graph links...');
       try {
         const entitiesJson = JSON.stringify(
           allEntities.map((e, i) => ({
@@ -72,6 +98,7 @@ export const runPipeline = async (uid: string, conversationId: string): Promise<
       }
     }
 
+    onProgress?.('FINALIZING', 90, 'Persisting synthesized records to your private vault...');
     const batch = db.batch();
     const now = FieldValue.serverTimestamp();
     const metadata = { sourceConversationId: conversationId, createdAt: now };
@@ -109,6 +136,7 @@ export const runPipeline = async (uid: string, conversationId: string): Promise<
 
     // 3. Relationships
     const relationshipsRef = userRef.collection('relationships');
+    let validRelationshipsCount = 0;
     for (const rel of relationshipsData.relationships) {
       if (rel.sourceIndex < entityDbIds.length && rel.targetIndex < entityDbIds.length) {
         const ref = relationshipsRef.doc();
@@ -119,6 +147,7 @@ export const runPipeline = async (uid: string, conversationId: string): Promise<
           description: rel.description || null,
           ...metadata,
         });
+        validRelationshipsCount++;
       }
     }
 
@@ -129,8 +158,23 @@ export const runPipeline = async (uid: string, conversationId: string): Promise<
     });
 
     await batch.commit();
-    logger.info({ uid, conversationId }, 'Intelligence pipeline completed successfully');
+
+    const counts = {
+      memories: memoriesData.memories.length,
+      goals: goalsData.goals.length,
+      decisions: decisionsData.decisions.length,
+      relationships: validRelationshipsCount,
+    };
+
+    onProgress?.('COMPLETED', 100, 'Intelligence synthesis completed successfully');
+    logger.info({ uid, conversationId, counts }, 'Intelligence pipeline completed successfully');
+
+    return {
+      summaryId: journalRef.id,
+      counts,
+    };
   } catch (error) {
     logger.error({ err: error, uid, conversationId }, 'Intelligence pipeline failed during processing/write');
+    throw error;
   }
 };
