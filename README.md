@@ -89,10 +89,11 @@ graph LR
 * **Validation:** Zod (Strict schema enforcement for HTTP payloads and WebSocket frames)
 
 ### Infrastructure & Database
+* **Serverless Compute:** Google Cloud Run (Containerized Fastify REST + WebSocket microservice)
 * **Database:** Google Cloud Firestore (NoSQL Document Store)
 * **Auth Provider:** Firebase Authentication
 * **Security Rules:** Strict `firestore.rules` enforcement
-* **Hosting:** Firebase Hosting (Frontend) & Render (Backend Fastify API)
+* **Client Hosting:** Firebase Hosting (React Vite SPA)
 
 ---
 
@@ -101,7 +102,8 @@ graph LR
 ### Prerequisites
 * **Node.js**: `v18.x` or higher
 * **npm**: `v9.x` or higher
-* **Firebase Project**: An active Firebase project with Authentication (Email/Password) and Firestore enabled.
+* **Google Cloud SDK (`gcloud`)** & **Firebase CLI**
+* **Google Cloud Project**: An active GCP/Firebase project with Authentication (Email/Password) and Firestore enabled.
 * **Google AI Studio**: A valid Gemini API Key (`AIza...`).
 
 ### 1. Clone the Repository
@@ -121,29 +123,27 @@ VITE_FIREBASE_PROJECT_ID=your_project_id
 VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
-VITE_BACKEND_URL=http://localhost:3000
-# Optional WebSocket URL (automatically derived as ws:// or wss:// from VITE_BACKEND_URL if omitted)
-# VITE_WS_URL=ws://localhost:3000/ws
+VITE_BACKEND_URL=https://<your-cloud-run-service-url>
 ```
 
 **Backend (`backend/.env`):**
 ```env
-PORT=3000
-NODE_ENV=development
+PORT=8080
+NODE_ENV=production
 GOOGLE_CLOUD_PROJECT_ID=your_project_id
 GEMINI_API_KEY=your_google_gemini_api_key
 ```
 
-*Note: You must also place your Firebase `service-account.json` file in the `backend/` directory.*
+### 3. Run Locally (Development)
 
-### 3. Run the Backend API & WebSocket Gateway
+**Backend API & WebSocket Gateway:**
 ```bash
 cd backend
 npm install
 npm run dev
 ```
 
-### 4. Run the Frontend Application
+**Frontend Application:**
 ```bash
 cd frontend
 npm install
@@ -153,7 +153,45 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## 🛡️ Security Constitution
+## ☁️ Deployment Guide (Google Cloud Run + Firebase)
+
+### 1. Deploy Backend to Google Cloud Run
+MindVault's backend is fully containerized and runs seamlessly on Google Cloud Run with WebSocket support and horizontal auto-scaling.
+
+Deploy from the `backend/` directory with the mandatory **Cloud Run AI Challenge** label:
+```bash
+cd backend
+
+# Build and deploy service to Google Cloud Run
+gcloud run deploy mindvault-api \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 8080 \
+  --set-labels dev-tutorial=cloud-run-ai-challenge \
+  --set-env-vars NODE_ENV=production,GOOGLE_CLOUD_PROJECT_ID=mindvault-39809 \
+  --set-secrets GEMINI_API_KEY=gemini-api-key:latest \
+  --session-affinity
+```
+
+> **Note on WebSockets:** Cloud Run natively supports WebSockets out of the box. `--session-affinity` ensures that multi-tab sessions and streaming sockets remain routed smoothly.
+
+### 2. Deploy Firestore Security Rules
+Deploy the cryptographically isolated security rules to Firestore:
+```bash
+firebase deploy --only firestore:rules
+```
+
+### 3. Deploy Frontend to Firebase Hosting
+```bash
+cd frontend
+npm run build
+firebase deploy --only hosting
+```
+
+---
+
+## 🛡️ Security Constitution & Firestore Security Rules
 
 MindVault operates under a strict Threat Model. To ensure compliance, the codebase enforces the following:
 
@@ -162,6 +200,13 @@ MindVault operates under a strict Threat Model. To ensure compliance, the codeba
 3. **No Cross-User Event Leakage:** WebSockets map connections strictly by authenticated `uid`. Users can never subscribe to or receive another user's stream, notes, or analysis.
 4. **Data Sanitization:** All user inputs are sanitized using DOMPurify before rendering to prevent Cross-Site Scripting (XSS).
 5. **Prompt Injection Mitigation:** User input is strictly wrapped in `<user_provided_content>` tags, and the system prompt explicitly commands the AI to ignore any adversarial instructions found within those tags.
+
+### Firestore Security Rules Breakdown
+See the full implementation in [`firestore.rules`](./firestore.rules).
+- **Default Deny:** Root-level documents are locked with `allow read, write: if false;`.
+- **User Document Isolation (`/users/{uid}`):** Read/write strictly permitted only if `request.auth.uid == uid`.
+- **Journal Subcollection (`/users/{uid}/journals/{journalId}`):** Write validation enforces non-empty content strings (1 - 50,000 chars) and protects `createdAt` from tampering.
+- **Memory & Knowledge Graph Isolation (`/users/{uid}/memories`, `/users/{uid}/goals`, `/users/{uid}/decisions`, `/users/{uid}/knowledgeGraph`):** Users have exclusive access to their own extracted neural entities and graph edges; cross-tenant reads or writes are strictly blocked at the database engine level.
 
 ### Running Automated Test Suites
 
