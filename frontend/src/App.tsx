@@ -6,6 +6,7 @@ import { GuestGuard } from './components/layout/GuestGuard';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './contexts/ThemeProvider';
+import { WebSocketProvider } from './contexts/WebSocketContext';
 
 // Route-level code splitting for all pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -94,11 +95,13 @@ const App: React.FC = () => {
     <ThemeProvider defaultTheme="dark">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Router>
-            <Suspense fallback={<PageLoader />}>
-              <AppRoutes />
-            </Suspense>
-          </Router>
+          <WebSocketProvider>
+            <Router>
+              <Suspense fallback={<PageLoader />}>
+                <AppRoutes />
+              </Suspense>
+            </Router>
+          </WebSocketProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

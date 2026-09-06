@@ -28,6 +28,64 @@ import {
   transitions,
 } from '../../lib/motion';
 
+import { useWebSocket } from '../../hooks/useWebSocket';
+
+const LiveSyncIndicator: React.FC = () => {
+  const { connectionState } = useWebSocket();
+
+  const config = {
+    CONNECTED: {
+      color: 'bg-emerald-500',
+      pulse: true,
+      label: 'Live Sync',
+    },
+    CONNECTING: {
+      color: 'bg-amber-500',
+      pulse: true,
+      label: 'Connecting...',
+    },
+    RECONNECTING: {
+      color: 'bg-amber-500',
+      pulse: true,
+      label: 'Reconnecting...',
+    },
+    ERROR: {
+      color: 'bg-rose-500',
+      pulse: false,
+      label: 'Offline (REST)',
+    },
+    DISCONNECTED: {
+      color: 'bg-zinc-400 dark:bg-zinc-600',
+      pulse: false,
+      label: 'Offline (REST)',
+    },
+  }[connectionState] || {
+    color: 'bg-zinc-400',
+    pulse: false,
+    label: 'Offline',
+  };
+
+  return (
+    <div
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-foreground/[0.04] border border-foreground/[0.08] text-[11px] font-medium text-muted-foreground select-none transition-all duration-200"
+      title={`Real-Time Status: ${config.label}`}
+    >
+      <span className="relative flex h-2 w-2">
+        {config.pulse && (
+          <span
+            className={cn(
+              'animate-ping absolute inline-flex h-full w-full rounded-full opacity-75',
+              config.color
+            )}
+          />
+        )}
+        <span className={cn('relative inline-flex rounded-full h-2 w-2', config.color)} />
+      </span>
+      <span className="tracking-tight text-[10.5px] font-medium text-foreground/80">{config.label}</span>
+    </div>
+  );
+};
+
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: MessageSquareText, label: 'Dialogue & Chat', path: '/chat' },
@@ -99,19 +157,22 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           </div>
           <span className="font-display font-bold text-lg text-foreground tracking-tight leading-none mt-0.5">MindVault AI</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="hover:bg-foreground/10 text-foreground">
-          <AnimatePresence mode="wait" initial={false}>
-            {isMobileMenuOpen ? (
-              <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={transitions.micro}>
-                <X className="h-5 w-5" />
-              </motion.div>
-            ) : (
-              <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={transitions.micro}>
-                <Menu className="h-5 w-5" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Button>
+        <div className="flex items-center gap-2">
+          <LiveSyncIndicator />
+          <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="hover:bg-foreground/10 text-foreground">
+            <AnimatePresence mode="wait" initial={false}>
+              {isMobileMenuOpen ? (
+                <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={transitions.micro}>
+                  <X className="h-5 w-5" />
+                </motion.div>
+              ) : (
+                <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={transitions.micro}>
+                  <Menu className="h-5 w-5" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Button>
+        </div>
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -208,14 +269,17 @@ interface SidebarContentProps {
 
 const SidebarContent: React.FC<SidebarContentProps> = ({ navItems, secondaryNavItems, NavLink, userInitial, currentUser, handleSignOut }) => (
   <div className="flex-1 h-full flex flex-col bg-background/60 lg:bg-foreground/[0.02] backdrop-blur-2xl border border-foreground/[0.05] rounded-[24px] shadow-2xl overflow-hidden">
-    <div className="p-6 hidden lg:flex items-center gap-[14px]">
-      <div className="shrink-0 flex items-center justify-center w-[40px] h-[40px]">
-        <img src="/logo-128.webp" width={40} height={40} alt="MindVault AI Logo" className="w-full h-full object-contain" />
+    <div className="p-5 hidden lg:flex items-center justify-between gap-[12px]">
+      <div className="flex items-center gap-[12px]">
+        <div className="shrink-0 flex items-center justify-center w-[36px] h-[36px]">
+          <img src="/logo-128.webp" width={36} height={36} alt="MindVault AI Logo" className="w-full h-full object-contain" />
+        </div>
+        <div className="flex flex-col justify-center mt-[1px]">
+          <span className="font-display font-bold text-[18px] tracking-tight text-foreground leading-none">MindVault AI</span>
+          <span className="text-[9.5px] uppercase font-medium text-muted-foreground tracking-[0.08em] mt-1 leading-none">Zero-Trust AI Brain</span>
+        </div>
       </div>
-      <div className="flex flex-col justify-center mt-[1px]">
-        <span className="font-display font-bold text-[19px] tracking-tight text-foreground leading-none">MindVault AI</span>
-        <span className="text-[10px] uppercase font-medium text-muted-foreground tracking-[0.1em] mt-1 leading-none">Zero-Trust AI Brain</span>
-      </div>
+      <LiveSyncIndicator />
     </div>
 
     <motion.div
