@@ -16,11 +16,13 @@ import {
   X,
   Clock,
   ChevronRight,
+  Square,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { api } from '../../lib/api';
 import { sanitizeHtml, formatMarkdownText } from '../../lib/sanitize';
 import { useAuth } from '../../contexts/AuthContext';
+import { useWebSocket, useWebSocketEvent } from '../../hooks/useWebSocket';
 
 interface Message {
   id: string;
@@ -48,12 +50,21 @@ const INITIAL_MESSAGES: Message[] = [
 
 const ChatPage: React.FC = () => {
   const { currentUser } = useAuth();
+  const { isConnected, send } = useWebSocket();
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [isProcessingPipeline, setIsProcessingPipeline] = useState(false);
   const [pipelineSuccess, setPipelineSuccess] = useState(false);
+  const [pipelineStatus, setPipelineStatus] = useState<{
+    stage: string;
+    progress: number;
+    message: string;
+  } | null>(null);
+
+  const activeRequestIdRef = useRef<string | null>(null);
 
   // Conversation History state
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
@@ -170,6 +181,100 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  // Real-time WebSocket Event Handlers
+  useWebSocketEvent('ai.stream.start', (event: any) => {
+    if (event.requestId === activeRequestIdRef.current) {
+      if (event.conversationId && !conversationId) {
+        setConversationId(event.conversationId);
+      }
+    }
+  });
+
+  useWebSocketEvent('ai.stream.chunk', (event: any) => {
+    if (event.requestId === activeRequestIdRef.current) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === `stream_${event.requestId}`
+            ? { ...msg, content: msg.content + event.content }
+            : msg
+        )
+      );
+    }
+  });
+
+  useWebSocketEvent('ai.stream.complete', (event: any) => {
+    if (event.requestId === activeRequestIdRef.current) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === `stream_${event.requestId}`
+            ? {
+                ...msg,
+                id: event.messageId || msg.id,
+                content: event.content || msg.content,
+              }
+            : msg
+        )
+      );
+
+      if (!conversationId && event.conversationId) {
+        setConversationId(event.conversationId);
+        fetchConversations();
+      }
+
+      setIsLoading(false);
+      setIsStreaming(false);
+      activeRequestIdRef.current = null;
+    }
+  });
+
+  useWebSocketEvent('ai.stream.error', (event: any) => {
+    if (event.requestId === activeRequestIdRef.current) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === `stream_${event.requestId}`
+            ? {
+                ...msg,
+                content: `⚠️ Error: ${event.message || 'Stream generation failed'}`,
+              }
+            : msg
+        )
+      );
+      setIsLoading(false);
+      setIsStreaming(false);
+      activeRequestIdRef.current = null;
+    }
+  });
+
+  useWebSocketEvent('intelligence.progress', (event: any) => {
+    setPipelineStatus({
+      stage: event.stage,
+      progress: event.progress,
+      message: event.message,
+    });
+  });
+
+  useWebSocketEvent('intelligence.completed', () => {
+    setIsProcessingPipeline(false);
+    setPipelineStatus(null);
+    setPipelineSuccess(true);
+    setTimeout(() => setPipelineSuccess(false), 4000);
+  });
+
+  useWebSocketEvent('intelligence.error', (event: any) => {
+    setIsProcessingPipeline(false);
+    setPipelineStatus(null);
+    alert(event.message || 'Failed to complete intelligence synthesis.');
+  });
+
+  const handleCancelGeneration = () => {
+    if (activeRequestIdRef.current) {
+      send({ type: 'chat.cancel', requestId: activeRequestIdRef.current });
+      setIsLoading(false);
+      setIsStreaming(false);
+      activeRequestIdRef.current = null;
+    }
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -189,6 +294,37 @@ const ChatPage: React.FC = () => {
     isUserScrolledUpRef.current = false;
     setTimeout(() => scrollToBottom(), 50);
 
+    // If WebSocket is connected, use real-time progressive streaming
+    if (isConnected) {
+      const requestId = crypto.randomUUID();
+      activeRequestIdRef.current = requestId;
+
+      const streamPlaceholder: Message = {
+        id: `stream_${requestId}`,
+        role: 'model',
+        content: '',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, streamPlaceholder]);
+      setIsStreaming(true);
+
+      const dispatched = send({
+        type: 'chat.send',
+        requestId,
+        conversationId: conversationId || undefined,
+        message: userContent,
+      });
+
+      if (dispatched) {
+        return; // Successfully streaming over WebSocket
+      }
+
+      // If send failed, clean placeholder and fallback to REST
+      setMessages((prev) => prev.filter((m) => m.id !== `stream_${requestId}`));
+      setIsStreaming(false);
+    }
+
+    // Fallback path: REST / HTTP
     try {
       const response = await api.post('/api/v1/chat/message', {
         message: userContent,
@@ -224,6 +360,8 @@ const ChatPage: React.FC = () => {
       setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
       setIsLoading(false);
+      setIsStreaming(false);
+      activeRequestIdRef.current = null;
     }
   };
 
@@ -232,6 +370,26 @@ const ChatPage: React.FC = () => {
     setIsProcessingPipeline(true);
     setPipelineSuccess(false);
 
+    if (isConnected && conversationId) {
+      const requestId = crypto.randomUUID();
+      setPipelineStatus({
+        stage: 'ANALYSIS_STARTED',
+        progress: 10,
+        message: 'Analyzing context...',
+      });
+
+      const dispatched = send({
+        type: 'intelligence.start',
+        requestId,
+        conversationId,
+      });
+
+      if (dispatched) {
+        return;
+      }
+    }
+
+    // REST Fallback path
     try {
       if (conversationId) {
         await api.post('/api/v1/intelligence/process', { conversationId });
@@ -243,8 +401,10 @@ const ChatPage: React.FC = () => {
       setPipelineSuccess(true);
     } finally {
       setIsProcessingPipeline(false);
+      setPipelineStatus(null);
     }
   };
+
 
   const filteredConversations = conversations.filter((c) =>
     (c.topic || '').toLowerCase().includes(searchHistory.toLowerCase())
@@ -312,7 +472,6 @@ const ChatPage: React.FC = () => {
             <Plus className="h-4 w-4" />
             <span>New Chat</span>
           </Button>
-
           {/* Synthesize Pipeline Button */}
           <Button
             variant="outline"
@@ -331,7 +490,15 @@ const ChatPage: React.FC = () => {
             ) : (
               <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
             )}
-            <span>{pipelineSuccess ? 'Memories Extracted!' : 'Synthesize Memories'}</span>
+            <span>
+              {pipelineStatus
+                ? `${pipelineStatus.message} (${pipelineStatus.progress}%)`
+                : isProcessingPipeline
+                ? 'Synthesizing...'
+                : pipelineSuccess
+                ? 'Memories Extracted!'
+                : 'Synthesize Memories'}
+            </span>
           </Button>
         </div>
       </div>
@@ -378,41 +545,48 @@ const ChatPage: React.FC = () => {
               {/* Conversations List */}
               <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin">
                 {isLoadingConversations ? (
-                  <div className="p-6 flex flex-col items-center justify-center gap-2 text-muted-foreground text-xs">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <div className="p-6 text-center text-xs text-muted-foreground flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
                     <span>Loading vault history...</span>
                   </div>
                 ) : filteredConversations.length === 0 ? (
-                  <div className="p-6 text-center text-muted-foreground text-xs space-y-2">
-                    <MessageSquare className="h-8 w-8 mx-auto opacity-30" />
-                    <p>No conversations found</p>
+                  <div className="p-6 text-center text-xs text-muted-foreground">
+                    {searchHistory ? 'No reflections match search' : 'No recorded conversations yet'}
                   </div>
                 ) : (
                   filteredConversations.map((conv) => {
-                    const isActive = conv.id === conversationId;
+                    const isSelected = conv.id === conversationId;
                     return (
                       <div
                         key={conv.id}
                         onClick={() => handleSelectConversation(conv)}
                         className={cn(
-                          'group relative p-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-between text-xs',
-                          isActive
-                            ? 'bg-primary/10 text-primary font-semibold border border-primary/25 shadow-xs'
-                            : 'hover:bg-foreground/5 text-foreground/85 border border-transparent'
+                          'group flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all duration-150 text-left border',
+                          isSelected
+                            ? 'bg-foreground/[0.08] dark:bg-foreground/[0.08] border-foreground/15 text-foreground shadow-xs'
+                            : 'border-transparent hover:bg-foreground/[0.04] text-muted-foreground hover:text-foreground'
                         )}
                       >
-                        <div className="min-w-0 pr-2">
-                          <p className="truncate font-medium text-[13px] leading-tight text-foreground">
-                            {conv.topic || 'Untitled Conversation'}
-                          </p>
-                          <span className="text-[10px] text-muted-foreground mt-0.5 block">
-                            {formatTimeAgo(conv.updatedAt || conv.createdAt)}
-                          </span>
+                        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                          <MessageSquare
+                            className={cn(
+                              'h-3.5 w-3.5 shrink-0 mt-0.5',
+                              isSelected ? 'text-primary' : 'text-muted-foreground/70'
+                            )}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium truncate leading-tight">
+                              {conv.topic || 'Untitled Reflection'}
+                            </p>
+                            <span className="text-[10px] text-muted-foreground/60 block mt-0.5">
+                              {formatTimeAgo(conv.updatedAt || conv.createdAt)}
+                            </span>
+                          </div>
                         </div>
                         <button
                           onClick={(e) => handleDeleteConversation(conv.id, e)}
-                          title="Delete thread"
-                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all shrink-0"
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all shrink-0 ml-1"
+                          title="Delete reflection"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -425,28 +599,20 @@ const ChatPage: React.FC = () => {
           )}
         </AnimatePresence>
 
-        {/* Main Chat Workspace Panel */}
-        <div className="flex-1 min-h-0 flex flex-col bg-background/70 dark:bg-foreground/[0.02] backdrop-blur-xl border border-foreground/[0.08] rounded-[24px] sm:rounded-[28px] shadow-sm overflow-hidden relative">
-          {/* Conversation Loading Overlay */}
-          {isLoadingConversationMessages && (
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-xs gap-2">
-              <Loader2 className="h-7 w-7 animate-spin text-primary" />
-              <span className="text-xs text-muted-foreground font-medium">Restoring conversation context...</span>
-            </div>
-          )}
-
-          {/* Messages Scroll Area */}
+        {/* Active Chat Conversation Container */}
+        <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-card/90 dark:bg-foreground/[0.025] backdrop-blur-xl border border-foreground/[0.08] rounded-[24px] sm:rounded-[28px] shadow-md overflow-hidden relative">
+          {/* Scrollable Messages Area */}
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 sm:py-6 space-y-5 min-h-0 scrollbar-thin"
+            className="flex-1 overflow-y-auto p-3.5 sm:p-5 md:p-6 space-y-4 sm:space-y-5 scrollbar-thin"
           >
             {messages.map((msg) => (
               <motion.div
                 key={msg.id}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
                 className={cn(
                   'flex gap-3 max-w-[92%] sm:max-w-[80%] lg:max-w-[850px]',
                   msg.role === 'user' ? 'ml-auto flex-row-reverse' : 'mr-auto'
@@ -473,9 +639,12 @@ const ChatPage: React.FC = () => {
                   )}
                 >
                   <div
-                    className="whitespace-pre-wrap select-text font-normal"
+                    className="whitespace-pre-wrap select-text font-normal inline"
                     dangerouslySetInnerHTML={{ __html: formatMarkdownText(msg.content) }}
                   />
+                  {isStreaming && msg.id.startsWith('stream_') && (
+                    <span className="inline-block w-1.5 h-4 ml-1 bg-primary animate-pulse align-middle rounded-full" />
+                  )}
                   <span
                     className={cn(
                       'block text-[11px] mt-2.5 select-none text-right',
@@ -489,7 +658,7 @@ const ChatPage: React.FC = () => {
             ))}
 
             {/* Thinking Indicator */}
-            {isLoading && (
+            {isLoading && !messages.some((m) => m.id.startsWith('stream_') && m.content.length > 0) && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -520,20 +689,34 @@ const ChatPage: React.FC = () => {
                   className="flex-1 bg-transparent border-0 outline-none text-[14.5px] sm:text-[15px] text-foreground placeholder:text-muted-foreground/70 pr-2 min-w-0"
                   disabled={isLoading}
                 />
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: !input.trim() || isLoading ? 1 : 1.04 }}
-                  whileTap={{ scale: !input.trim() || isLoading ? 1 : 0.97 }}
-                  disabled={!input.trim() || isLoading}
-                  aria-label="Send reflection"
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity shadow-sm cursor-pointer"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4 ml-0.5" />
-                  )}
-                </motion.button>
+                {isStreaming ? (
+                  <motion.button
+                    type="button"
+                    onClick={handleCancelGeneration}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    aria-label="Stop generation"
+                    title="Stop generation"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shrink-0 transition-opacity shadow-sm cursor-pointer"
+                  >
+                    <Square className="h-3.5 w-3.5 fill-current" />
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: !input.trim() || isLoading ? 1 : 1.04 }}
+                    whileTap={{ scale: !input.trim() || isLoading ? 1 : 0.97 }}
+                    disabled={!input.trim() || isLoading}
+                    aria-label="Send reflection"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity shadow-sm cursor-pointer"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4 ml-0.5" />
+                    )}
+                  </motion.button>
+                )}
               </div>
             </form>
 
@@ -545,7 +728,7 @@ const ChatPage: React.FC = () => {
               </span>
               <span className="font-medium tracking-wide text-indigo-500 dark:text-indigo-400 flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-indigo-400" />
-                Gemini 3.5 Flash-Lite Engine
+                Gemini 3.5 Flash-Lite · {isConnected ? 'Live WebSocket Stream' : 'REST Mode'}
               </span>
             </div>
           </div>

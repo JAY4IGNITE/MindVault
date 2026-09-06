@@ -7,9 +7,9 @@
     "dev": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest --runInBand",
-    "test:security": "jest tests/security --runInBand",
-    "test:integration": "jest tests/integration --runInBand",
+    "test": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first jest --runInBand --forceExit",
+    "test:security": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first jest tests/security --runInBand --forceExit",
+    "test:integration": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first jest tests/integration --runInBand --forceExit",
     "seed:demo": "ts-node src/scripts/seedDemo.ts"
   },
   "dependencies": {
